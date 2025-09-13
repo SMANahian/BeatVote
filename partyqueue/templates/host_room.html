@@ -1,0 +1,9 @@
+{% extends 'base.html' %}
+{% block title %}Host Room{% endblock %}
+{% block content %}
+<h1 class="text-xl">Host Room</h1>
+<div id="player" class="my-4"></div>
+<ul id="queue"></ul>
+<script src="https://www.youtube.com/iframe_api"></script>
+<script src="/static/js/host_player.js" defer></script>
+{% endblock %}
