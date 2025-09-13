@@ -1,0 +1,9 @@
+{% extends 'base.html' %}
+{% block title %}Join Room{% endblock %}
+{% block content %}
+<h1 class="text-xl">Join Room</h1>
+<form method="post" class="flex gap-2">
+  <input type="text" name="code" placeholder="Enter Code" class="border p-2" />
+  <button class="bg-blue-500 text-white p-2" type="submit">Join</button>
+</form>
+{% endblock %}
