@@ -12,7 +12,15 @@ PartyQueue is a Flask + MongoDB + Socket.IO web application for running collabor
 
 ## Setup
 
-1. Create a virtual environment and install dependencies:
+### 1. Prerequisites
+
+- Python 3.10+ and `pip`
+- [Docker](https://docs.docker.com/get-docker/) (optional, for running MongoDB)
+- A Google Cloud project with access to the YouTube Data API v3
+
+### 2. Install dependencies
+
+Create a virtual environment and install the required Python packages:
 
 ```bash
 python3 -m venv venv
@@ -20,21 +28,47 @@ source venv/bin/activate
 pip install -r requirements.txt
 ```
 
-2. Copy `.env.example` to `.env` and fill in values. Obtain a YouTube Data API v3 key from Google Cloud Console and enable the API.
+### 3. Configure environment variables
 
-3. Run MongoDB locally or use the included docker compose configuration:
+Copy `.env.example` to `.env` and set the required values:
+
+```bash
+cp .env.example .env
+```
+
+- `FLASK_ENV` – development or production mode
+- `SECRET_KEY` – random string used by Flask for session security
+- `MONGODB_URI` – connection string for MongoDB (e.g. `mongodb://localhost:27017/partyqueue`)
+- `YOUTUBE_API_KEY` – API key for the YouTube Data API v3
+
+To obtain a YouTube API key:
+
+1. Visit the [Google Cloud Console](https://console.cloud.google.com/).
+2. Create a new project if necessary.
+3. Enable the **YouTube Data API v3** for the project.
+4. Create an API key and place it in the `YOUTUBE_API_KEY` field in `.env`.
+
+### 4. Start MongoDB
+
+Run a local MongoDB instance or start it with Docker:
+
+```bash
+docker-compose up mongo
+```
+
+If you prefer to run the entire stack in Docker, you can run:
 
 ```bash
 docker-compose up
 ```
 
-4. Start the development server:
+### 5. Launch the development server
 
 ```bash
 make dev
 ```
 
-Navigate to [http://localhost:5000](http://localhost:5000) to access the app.
+The app will be available at [http://localhost:5000](http://localhost:5000).
 
 ## Testing
 
