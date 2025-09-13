@@ -1,6 +1,5 @@
 from flask_socketio import join_room, leave_room, emit
-from . import queue_service
-from ..services import vote_service
+from ..services import queue_service, vote_service
 
 # in-memory store for demo
 _queues = {}
