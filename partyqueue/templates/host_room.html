@@ -1,9 +1,20 @@
 {% extends 'base.html' %}
 {% block title %}Host Room{% endblock %}
 {% block content %}
-<h1 class="text-xl">Host Room</h1>
+{% if room %}
+<h1 class="text-xl">Host Room: {{ room.name }}</h1>
+<p class="mb-2">Listener code: {{ room.code_listener }}</p>
+<p class="mb-4">Suggestor code: {{ room.code_suggestor }}</p>
 <div id="player" class="my-4"></div>
 <ul id="queue"></ul>
 <script src="https://www.youtube.com/iframe_api"></script>
+<script>window.roomId = "{{ room._id }}";</script>
 <script src="/static/js/host_player.js" defer></script>
+{% else %}
+<h1 class="text-xl mb-4">Create Room</h1>
+<form method="post" class="flex flex-col gap-2">
+  <input type="text" name="name" placeholder="Room Name" class="border p-2" />
+  <button class="bg-blue-500 text-white p-2" type="submit">Create</button>
+</form>
+{% endif %}
 {% endblock %}
