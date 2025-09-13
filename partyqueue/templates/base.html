@@ -10,6 +10,19 @@
     <title>{% block title %}PartyQueue{% endblock %}</title>
   </head>
   <body class="bg-gray-100">
+    <nav class="bg-white shadow p-4 mb-4">
+      <div class="container mx-auto flex justify-between">
+        <a href="{{ url_for('rooms.landing') }}" class="font-bold">PartyQueue</a>
+        <div>
+          {% if current_user.is_authenticated %}
+          <span>{{ current_user.username }}</span>
+          {% else %}
+          <a href="{{ url_for('auth.signup') }}" class="mr-4 text-blue-600">Sign up</a>
+          <a href="{{ url_for('auth.login') }}" class="text-blue-600">Login</a>
+          {% endif %}
+        </div>
+      </div>
+    </nav>
     <div class="container mx-auto p-4">
       {% block content %}{% endblock %}
     </div>
