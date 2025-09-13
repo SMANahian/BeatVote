@@ -10,7 +10,7 @@ services:
     environment:
       - FLASK_APP=partyqueue.app
       - FLASK_ENV=development
-      - MONGODB_URI=mongodb://mongo:27017/partyqueue
+      - MONGO_URI=mongodb://mongo:27017/partyqueue
       - SECRET_KEY=changeme
       - YOUTUBE_API_KEY=your_youtube_key_here
   mongo:
