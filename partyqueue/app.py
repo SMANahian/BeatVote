@@ -11,6 +11,7 @@ def create_app(config_object: type[Config] | None = None) -> Flask:
     app.config.from_object(config_object or Config)
 
     mongo.init_app(app)
+    mongo.db.users.create_index("username", unique=True)
     login_manager.init_app(app)
 
     app.register_blueprint(auth_bp)

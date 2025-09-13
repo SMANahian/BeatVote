@@ -23,5 +23,8 @@ def authenticate(email: str, password: str) -> User | None:
 
 def register(email: str, username: str, password: str) -> User:
     uid = user_model.create_user(mongo.db[USERS_COLL], email, username, password)
+    from bson import ObjectId
+    if not isinstance(uid, ObjectId):
+        uid = ObjectId(uid)
     user = mongo.db[USERS_COLL].find_one({"_id": uid})
     return User(user)
