@@ -38,7 +38,8 @@ cp .env.example .env
 
 - `FLASK_ENV` – development or production mode
 - `SECRET_KEY` – random string used by Flask for session security
-- `MONGODB_URI` – connection string for MongoDB (e.g. `mongodb://localhost:27017/partyqueue`)
+- `MONGO_URI` – connection string for MongoDB (e.g. `mongodb://localhost:27017/partyqueue`)
+  (`MONGODB_URI` is also accepted)
 - `YOUTUBE_API_KEY` – API key for the YouTube Data API v3
 
 To obtain a YouTube API key:
@@ -83,7 +84,8 @@ sudo systemctl start mongod
 ```
 
 The application expects MongoDB at `mongodb://localhost:27017/partyqueue` by
-default. You can change this by setting `MONGODB_URI` in `.env`.
+default. You can change this by setting `MONGO_URI` in `.env` (or
+`MONGODB_URI`).
 
 If you prefer to run the entire stack in Docker, you can run:
 
