@@ -1,16 +1,16 @@
 .PHONY: run dev format lint test
 
 run:
-flask run
+	FLASK_APP=partyqueue.app flask run
 
 dev:
-FLASK_ENV=development flask run --reload
+	FLASK_APP=partyqueue.app FLASK_ENV=development flask run --reload
 
 format:
-black .
+	black .
 
 lint:
-flake8 partyqueue tests
+	flake8 partyqueue tests
 
 test:
-pytest
+	pytest
