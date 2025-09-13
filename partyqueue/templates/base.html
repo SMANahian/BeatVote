@@ -15,7 +15,10 @@
         <a href="{{ url_for('rooms.landing') }}" class="font-bold">PartyQueue</a>
         <div>
           {% if current_user.is_authenticated %}
-          <span>{{ current_user.username }}</span>
+          <span class="mr-4">{{ current_user.username }}</span>
+          <form action="{{ url_for('auth.logout') }}" method="post" class="inline">
+            <button type="submit" class="text-blue-600">Logout</button>
+          </form>
           {% else %}
           <a href="{{ url_for('auth.signup') }}" class="mr-4 text-blue-600">Sign up</a>
           <a href="{{ url_for('auth.login') }}" class="text-blue-600">Login</a>
