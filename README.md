@@ -50,11 +50,40 @@ To obtain a YouTube API key:
 
 ### 4. Start MongoDB
 
-Run a local MongoDB instance or start it with Docker:
+The application needs access to a running MongoDB server.
+
+#### Option A: Docker
+
+If you have Docker installed you can start a database using the provided
+compose file:
 
 ```bash
 docker-compose up mongo
 ```
+
+This launches MongoDB on `localhost:27017` and persists data in the
+`mongo_data` volume.
+
+#### Option B: Local installation
+
+Alternatively install MongoDB Community Edition natively on your machine by
+following the [official installation
+guide](https://www.mongodb.com/docs/manual/installation/). Once installed,
+start the service. Examples:
+
+```bash
+# macOS (Homebrew)
+brew tap mongodb/brew
+brew install mongodb-community@6.0
+brew services start mongodb-community@6.0
+
+# Ubuntu / Debian
+sudo apt-get install -y mongodb-org
+sudo systemctl start mongod
+```
+
+The application expects MongoDB at `mongodb://localhost:27017/partyqueue` by
+default. You can change this by setting `MONGODB_URI` in `.env`.
 
 If you prefer to run the entire stack in Docker, you can run:
 
