@@ -1,5 +1,9 @@
 """Authentication helpers."""
+
 from flask_login import UserMixin
+from bson import ObjectId
+from bson.errors import InvalidId
+
 from ..extensions import mongo, login_manager
 from ..models import USERS_COLL
 from ..models import users as user_model
@@ -12,7 +16,19 @@ class User(UserMixin):
 
 @login_manager.user_loader
 def load_user(user_id: str):
-    doc = mongo.db[USERS_COLL].find_one({"_id": user_id})
+    """Load a user from the session ID.
+
+    The session stores the user's MongoDB ``ObjectId`` as a string. When
+    loading the user we must convert it back to ``ObjectId`` so that the lookup
+    succeeds. Without this conversion, authentication would always fail on
+    subsequent requests, resulting in ``Unauthorized`` errors after login.
+    """
+
+    try:
+        oid = ObjectId(user_id)
+    except InvalidId:
+        return None
+    doc = mongo.db[USERS_COLL].find_one({"_id": oid})
     return User(doc) if doc else None
 
 def authenticate(email: str, password: str) -> User | None:
