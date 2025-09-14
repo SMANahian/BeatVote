@@ -26,17 +26,32 @@ def on_join(data):
     join_room(room_id)
     _emit_queue(room_id)
     room = mongo.db[ROOMS_COLL].find_one({"_id": room_id})
-    if room and room.get("current_song_id"):
-        current = mongo.db[SONGS_COLL].find_one(
-            {"_id": room["current_song_id"]}
-        )
-        if current:
-            socketio.emit(
-                "player:play",
-                {"video_id": current["video_id"]},
-                room=request.sid,
-                namespace="/room",
+    if room:
+        if room.get("current_song_id"):
+            current = mongo.db[SONGS_COLL].find_one(
+                {"_id": room["current_song_id"]}
             )
+            if current:
+                socketio.emit(
+                    "player:play",
+                    {"video_id": current["video_id"]},
+                    room=request.sid,
+                    namespace="/room",
+                )
+        else:
+            queue = list(mongo.db[SONGS_COLL].find({"room_id": room_id}))
+            next_song = QueueService.get_next_song(room, queue)
+            if next_song:
+                mongo.db[ROOMS_COLL].update_one(
+                    {"_id": room_id},
+                    {"$set": {"current_song_id": next_song["_id"]}},
+                )
+                socketio.emit(
+                    "player:play",
+                    {"video_id": next_song["video_id"]},
+                    room=room_id,
+                    namespace="/room",
+                )
 
 
 @socketio.on("queue:add", namespace="/room")
@@ -62,15 +77,18 @@ def on_queue_add(data):
         return
     mongo.db[SONGS_COLL].insert_one(new_song)
     if not room.get("current_song_id"):
-        mongo.db[ROOMS_COLL].update_one(
-            {"_id": room_id}, {"$set": {"current_song_id": new_song["_id"]}}
-        )
-        socketio.emit(
-            "player:play",
-            {"video_id": video_id},
-            room=room_id,
-            namespace="/room",
-        )
+        next_song = QueueService.get_next_song(room, queue)
+        if next_song:
+            mongo.db[ROOMS_COLL].update_one(
+                {"_id": room_id},
+                {"$set": {"current_song_id": next_song["_id"]}},
+            )
+            socketio.emit(
+                "player:play",
+                {"video_id": next_song["video_id"]},
+                room=room_id,
+                namespace="/room",
+            )
     _emit_queue(room_id)
 
 
@@ -96,4 +114,19 @@ def on_queue_vote(data):
             }
         },
     )
+    room = mongo.db[ROOMS_COLL].find_one({"_id": room_id})
+    if room and not room.get("current_song_id"):
+        queue = list(mongo.db[SONGS_COLL].find({"room_id": room_id}))
+        next_song = QueueService.get_next_song(room, queue)
+        if next_song:
+            mongo.db[ROOMS_COLL].update_one(
+                {"_id": room_id},
+                {"$set": {"current_song_id": next_song["_id"]}},
+            )
+            socketio.emit(
+                "player:play",
+                {"video_id": next_song["video_id"]},
+                room=room_id,
+                namespace="/room",
+            )
     _emit_queue(room_id)
