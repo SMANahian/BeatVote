@@ -70,9 +70,15 @@ def test_advance_queue_endpoint(monkeypatch):
     resp = client.post(f"/api/rooms/{room_id}/next")
     assert resp.status_code == 200
     assert resp.get_json()["video_id"] == "a"
-    assert songs_docs[0]["played"] is True
+    # The first call merely sets the current song without marking it as
+    # played yet. The song should only be flagged once the next track is
+    # requested.
+    assert songs_docs[0]["played"] is False
 
     resp = client.post(f"/api/rooms/{room_id}/next")
     assert resp.status_code == 200
     assert resp.get_json()["video_id"] == "b"
+    # After advancing again, the first song is marked as played and the
+    # second song becomes current.
+    assert songs_docs[0]["played"] is True
     assert room_doc["current_song_id"] == "s2"
