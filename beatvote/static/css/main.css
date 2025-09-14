@@ -1,1 +1,7 @@
-body { font-family: sans-serif; }
+body {
+  font-family: 'Inter', sans-serif;
+}
+
+input, button {
+  transition: background-color 0.2s ease, color 0.2s ease;
+}
