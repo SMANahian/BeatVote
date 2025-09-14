@@ -1,31 +1,45 @@
 let player;
 let currentSongId = null;
 let currentVideoId = null;
-let useExtension = false;
 const queueEl = document.getElementById('queue');
 const toggleBtn = document.getElementById('use-extension');
+
+let useExtension = true;
+const storedPref = localStorage.getItem('useExtension');
+if (storedPref !== null) {
+  useExtension = storedPref === 'true';
+} else {
+  localStorage.setItem('useExtension', 'true');
+}
+
+function updatePlayerMode() {
+  if (!toggleBtn) return;
+  if (useExtension) {
+    toggleBtn.textContent = 'Use Web Player';
+    const playerEl = document.getElementById('player');
+    if (playerEl) playerEl.style.display = 'none';
+    if (player) {
+      try {
+        player.stopVideo();
+      } catch (e) {
+        // ignore
+      }
+    }
+  } else {
+    toggleBtn.textContent = 'Use Extension Player';
+    const playerEl = document.getElementById('player');
+    if (playerEl) playerEl.style.display = '';
+    checkQueue();
+  }
+}
 
 if (toggleBtn) {
   toggleBtn.addEventListener('click', () => {
     useExtension = !useExtension;
-    if (useExtension) {
-      toggleBtn.textContent = 'Use Web Player';
-      const playerEl = document.getElementById('player');
-      if (playerEl) playerEl.style.display = 'none';
-      if (player) {
-        try {
-          player.stopVideo();
-        } catch (e) {
-          // ignore
-        }
-      }
-    } else {
-      toggleBtn.textContent = 'Use Extension Player';
-      const playerEl = document.getElementById('player');
-      if (playerEl) playerEl.style.display = '';
-      checkQueue();
-    }
+    localStorage.setItem('useExtension', useExtension.toString());
+    updatePlayerMode();
   });
+  updatePlayerMode();
 }
 
 function onYouTubeIframeAPIReady() {
