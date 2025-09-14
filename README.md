@@ -123,7 +123,7 @@ The `docker-compose.yml` file defines services for the Flask app and MongoDB. Th
 
 ## Browser Extension
 
-A simple Brave/Chrome extension is provided in the `extension` directory. It keeps the host room page pinned and plays queued songs in a dedicated YouTube tab. On the host room page, click **Use Extension Player** to let the extension handle playback instead of the embedded player.
+A simple Brave/Chrome extension is provided in the `extension` directory. It keeps the host room page pinned and plays queued songs in a dedicated YouTube tab. The extension player is enabled by default on the host page, but you can switch to the embedded player by clicking **Use Web Player**.
 
 ### Installation
 
@@ -132,7 +132,7 @@ A simple Brave/Chrome extension is provided in the `extension` directory. It kee
 3. Enable **Developer mode**.
 4. Click **Load unpacked** and select the `extension` folder.
 5. Click the extension icon and enter your room ID.
-6. The host page will open in a pinned tab. Click **Use Extension Player** on that page and songs from the queue will play in a separate tab.
+6. The host page will open in a pinned tab and songs from the queue will play in a separate tab. To use the embedded player instead, click **Use Web Player** on the host page.
 
 ## Notes
 
