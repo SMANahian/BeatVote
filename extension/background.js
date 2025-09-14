@@ -47,8 +47,10 @@ async function playNext() {
     } else {
       chrome.tabs.update(playerTabId, { url }, () => {
         if (chrome.runtime.lastError) {
-          chrome.tabs.create({ url }, (tab) => {
-            playerTabId = tab.id;
+          chrome.tabs.remove(playerTabId, () => {
+            chrome.tabs.create({ url }, (tab) => {
+              playerTabId = tab.id;
+            });
           });
         }
       });
@@ -66,8 +68,14 @@ function init() {
 chrome.runtime.onInstalled.addListener(init);
 chrome.runtime.onStartup.addListener(init);
 
-chrome.runtime.onMessage.addListener((msg) => {
+chrome.runtime.onMessage.addListener((msg, sender) => {
   if (msg.type === "video-ended" || msg.type === "use-extension") {
+    if (msg.type === "video-ended" && sender.tab) {
+      chrome.tabs.remove(sender.tab.id);
+      if (sender.tab.id === playerTabId) {
+        playerTabId = null;
+      }
+    }
     playNext();
   } else if (msg.type === 'room-updated') {
     chrome.storage.local.get('roomId', (res) => {
