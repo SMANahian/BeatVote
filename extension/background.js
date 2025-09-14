@@ -19,15 +19,26 @@ function ensureHostTab() {
   });
 }
 
-async function playNext() {
+async function ensurePlayback() {
   if (!ROOM_ID) return;
   try {
-    const res = await fetch(
-      `${SERVER_URL}/api/rooms/${ROOM_ID}/queue/next`,
-      { method: "POST" }
-    );
-    const data = await res.json();
-    const currentId = data.current_song_id;
+    // Fetch current queue state without mutating it
+    let res = await fetch(`${SERVER_URL}/api/rooms/${ROOM_ID}/queue`);
+    let data = await res.json();
+    let currentId = data.current_song_id;
+    let queue = data.queue;
+
+    // If nothing is marked as current but the queue has songs, advance to next
+    if (!currentId && queue.length > 0) {
+      res = await fetch(`${SERVER_URL}/api/rooms/${ROOM_ID}/queue/next`, {
+        method: "POST",
+      });
+      data = await res.json();
+      currentId = data.current_song_id;
+      queue = data.queue;
+    }
+
+    // No song to play, close existing player tab if present
     if (!currentId) {
       if (playerTabId != null) {
         chrome.tabs.remove(playerTabId);
@@ -35,10 +46,10 @@ async function playNext() {
       }
       return;
     }
-    const current = data.queue.find((s) => s._id === currentId);
-    if (!current) {
-      return;
-    }
+
+    const current = queue.find((s) => s._id === currentId);
+    if (!current) return;
+
     const url = `https://www.youtube.com/watch?v=${current.video_id}`;
     if (playerTabId == null) {
       chrome.tabs.create({ url }, (tab) => {
@@ -56,13 +67,25 @@ async function playNext() {
       });
     }
   } catch (e) {
-    console.error("Failed to play next song", e);
+    console.error("Failed to ensure playback", e);
   }
+}
+
+async function advanceAndPlayNext() {
+  if (!ROOM_ID) return;
+  try {
+    await fetch(`${SERVER_URL}/api/rooms/${ROOM_ID}/queue/next`, {
+      method: "POST",
+    });
+  } catch (e) {
+    console.error("Failed to advance queue", e);
+  }
+  ensurePlayback();
 }
 
 function init() {
   ensureHostTab();
-  playNext();
+  ensurePlayback();
 }
 
 chrome.runtime.onInstalled.addListener(init);
@@ -76,10 +99,10 @@ chrome.runtime.onMessage.addListener((msg, sender) => {
         playerTabId = null;
       }
     }
-    playNext();
+    advanceAndPlayNext();
   } else if (msg.type === "use-extension" || msg.type === "queue-updated") {
-    playNext();
-  } else if (msg.type === 'room-updated') {
+    ensurePlayback();
+  } else if (msg.type === "room-updated") {
     chrome.storage.local.get('roomId', (res) => {
       ROOM_ID = res.roomId;
       init();
