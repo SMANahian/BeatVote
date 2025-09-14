@@ -1,3 +1,7 @@
+window.addEventListener('queue-updated', () => {
+  chrome.runtime.sendMessage({ type: 'queue-updated' });
+});
+
 function attach() {
   const btn = document.getElementById('use-extension');
   if (!btn) {

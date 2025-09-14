@@ -112,6 +112,7 @@ async function checkQueue() {
   const res = await fetch(`/api/rooms/${window.roomId}/queue`);
   const data = await res.json();
   renderQueue(data);
+  window.dispatchEvent(new Event('queue-updated'));
 }
 
 if (window.roomId) {

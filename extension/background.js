@@ -69,13 +69,15 @@ chrome.runtime.onInstalled.addListener(init);
 chrome.runtime.onStartup.addListener(init);
 
 chrome.runtime.onMessage.addListener((msg, sender) => {
-  if (msg.type === "video-ended" || msg.type === "use-extension") {
-    if (msg.type === "video-ended" && sender.tab) {
+  if (msg.type === "video-ended") {
+    if (sender.tab) {
       chrome.tabs.remove(sender.tab.id);
       if (sender.tab.id === playerTabId) {
         playerTabId = null;
       }
     }
+    playNext();
+  } else if (msg.type === "use-extension" || msg.type === "queue-updated") {
     playNext();
   } else if (msg.type === 'room-updated') {
     chrome.storage.local.get('roomId', (res) => {
