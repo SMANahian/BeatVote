@@ -29,7 +29,7 @@ def create():
 @login_required
 def host_dashboard():
     room = mongo.db[ROOMS_COLL].find_one({"host_user_id": current_user.id})
-    return render_template("host_room.html", room=room)
+    return render_template("host_room.html", room=room, room_id=room["_id"] if room else None)
 
 
 @rooms_bp.route("/<room_id>/host")

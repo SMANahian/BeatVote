@@ -3,6 +3,7 @@
 {% block content %}
 {% if room %}
 <h1 class="text-xl">Host Room: {{ room.name }}</h1>
+<p class="mb-2">Room ID: {{ room._id }}</p>
 <p class="mb-2">Listener code: {{ room.code_listener }}</p>
 <p class="mb-4">Suggestor code: {{ room.code_suggestor }}</p>
 <button id="use-extension" class="bg-gray-200 text-sm p-2 mb-2">Use Extension Player</button>
