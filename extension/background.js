@@ -38,12 +38,8 @@ async function ensurePlayback() {
       queue = data.queue;
     }
 
-    // No song to play, close existing player tab if present
+    // No song to play, leave existing player tab until current video ends
     if (!currentId) {
-      if (playerTabId != null) {
-        chrome.tabs.remove(playerTabId);
-        playerTabId = null;
-      }
       return;
     }
 
