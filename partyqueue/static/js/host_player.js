@@ -29,6 +29,19 @@ window.onYouTubeIframeAPIReady = function () {
             });
         }
       },
+      // If a video fails to play (e.g. removed or restricted),
+      // advance the queue so playback continues.
+      onError: () => {
+        if (window.roomId) {
+          fetch(`/api/rooms/${window.roomId}/next`, { method: 'POST' })
+            .then((r) => (r.ok ? r.json() : null))
+            .then((data) => {
+              if (data && data.video_id) {
+                player.loadVideoById(data.video_id);
+              }
+            });
+        }
+      },
     },
   });
 };
