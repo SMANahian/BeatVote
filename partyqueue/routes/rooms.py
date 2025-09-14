@@ -32,7 +32,8 @@ def host(room_id):
 @rooms_bp.route("/<room_id>/guest")
 def guest(room_id):
     room = mongo.db[ROOMS_COLL].find_one({"_id": room_id})
-    return render_template("guest_room.html", room=room)
+    role = request.args.get("role")
+    return render_template("guest_room.html", room=room, role=role)
 
 @rooms_bp.route("/join", methods=["GET", "POST"])
 def join_page():
@@ -40,6 +41,7 @@ def join_page():
         code = request.form.get("code", "").strip().upper()
         room = room_model.find_by_code(mongo.db[ROOMS_COLL], code)
         if room:
-            return redirect(url_for("rooms.guest", room_id=room["_id"]))
+            role = "listener" if code.startswith("L-") else "suggestor"
+            return redirect(url_for("rooms.guest", room_id=room["_id"], role=role))
         return render_template("join_room.html", error="Invalid code")
     return render_template("join_room.html")
