@@ -18,6 +18,17 @@ window.onYouTubeIframeAPIReady = function () {
           pendingVideoId = null;
         }
       },
+      onStateChange: (e) => {
+        if (e.data === YT.PlayerState.ENDED && window.roomId) {
+          fetch(`/api/rooms/${window.roomId}/next`, { method: 'POST' })
+            .then((r) => (r.ok ? r.json() : null))
+            .then((data) => {
+              if (data && data.video_id) {
+                player.loadVideoById(data.video_id);
+              }
+            });
+        }
+      },
     },
   });
 };
