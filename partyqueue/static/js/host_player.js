@@ -6,6 +6,7 @@ function onYouTubeIframeAPIReady() {
   player = new YT.Player('player', {
     events: {
       onStateChange: onPlayerStateChange,
+      onError: onPlayerError,
     },
   });
 }
@@ -16,6 +17,12 @@ function onPlayerStateChange(event) {
       .then((r) => r.json())
       .then(renderQueue);
   }
+}
+
+function onPlayerError(event) {
+  fetch(`/api/rooms/${window.roomId}/queue/next`, { method: 'POST' })
+    .then((r) => r.json())
+    .then(renderQueue);
 }
 
 function renderQueue(data) {
