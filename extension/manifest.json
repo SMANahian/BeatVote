@@ -3,7 +3,9 @@
   "name": "BeatVote Player",
   "version": "1.0",
   "description": "Keeps the BeatVote host tab open and plays songs in a separate YouTube tab.",
-  "permissions": ["tabs"],
+
+  "permissions": ["tabs", "storage"],
+
   "host_permissions": ["http://localhost:5000/*", "https://www.youtube.com/*"],
   "background": {
     "service_worker": "background.js"
@@ -21,6 +23,9 @@
     }
   ],
   "action": {
-    "default_title": "BeatVote Player"
+
+    "default_title": "BeatVote Player",
+    "default_popup": "popup.html"
+
   }
 }

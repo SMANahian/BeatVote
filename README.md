@@ -128,10 +128,10 @@ A simple Brave/Chrome extension is provided in the `extension` directory. It kee
 ### Installation
 
 1. Ensure the BeatVote server is running.
-2. Update `extension/background.js` to set `ROOM_ID` (and `SERVER_URL` if needed).
-3. In Brave, open `brave://extensions`.
-4. Enable **Developer mode**.
-5. Click **Load unpacked** and select the `extension` folder.
+2. In Brave, open `brave://extensions`.
+3. Enable **Developer mode**.
+4. Click **Load unpacked** and select the `extension` folder.
+5. Click the extension icon and enter your room ID.
 6. The host page will open in a pinned tab. Click **Use Extension Player** on that page and songs from the queue will play in a separate tab.
 
 ## Notes

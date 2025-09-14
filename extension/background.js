@@ -1,9 +1,15 @@
 const SERVER_URL = "http://localhost:5000"; // Change if your server runs elsewhere
-const ROOM_ID = "default"; // Replace with your room ID
 
 let playerTabId = null;
+let ROOM_ID = null;
+
+chrome.storage.local.get('roomId', (res) => {
+  ROOM_ID = res.roomId;
+  init();
+});
 
 function ensureHostTab() {
+  if (!ROOM_ID) return;
   const hostPage = `${SERVER_URL}/rooms/${ROOM_ID}/host`;
   chrome.tabs.query({ url: `${SERVER_URL}/*` }, (tabs) => {
     const exists = tabs.some((t) => t.url === hostPage);
@@ -14,6 +20,7 @@ function ensureHostTab() {
 }
 
 async function playNext() {
+  if (!ROOM_ID) return;
   try {
     const res = await fetch(
       `${SERVER_URL}/api/rooms/${ROOM_ID}/queue/next`,
@@ -62,6 +69,11 @@ chrome.runtime.onStartup.addListener(init);
 chrome.runtime.onMessage.addListener((msg) => {
   if (msg.type === "video-ended" || msg.type === "use-extension") {
     playNext();
+  } else if (msg.type === 'room-updated') {
+    chrome.storage.local.get('roomId', (res) => {
+      ROOM_ID = res.roomId;
+      init();
+    });
   }
 });
 
