@@ -16,10 +16,20 @@ def landing():
 @login_required
 def create():
     if request.method == "POST":
+        existing_room = mongo.db[ROOMS_COLL].find_one({"host_user_id": current_user.id})
+        if existing_room:
+            return redirect(url_for("rooms.host_dashboard"))
         name = request.form.get("name", "My Party")
-        room = room_model.create_room(mongo.db[ROOMS_COLL], name, current_user.id)
-        return redirect(url_for("rooms.host", room_id=room["_id"]))
-    return render_template("host_room.html")
+        room_model.create_room(mongo.db[ROOMS_COLL], name, current_user.id)
+        return redirect(url_for("rooms.host_dashboard"))
+    return redirect(url_for("rooms.host_dashboard"))
+
+
+@rooms_bp.route("/host")
+@login_required
+def host_dashboard():
+    room = mongo.db[ROOMS_COLL].find_one({"host_user_id": current_user.id})
+    return render_template("host_room.html", room=room)
 
 
 @rooms_bp.route("/<room_id>/host")
