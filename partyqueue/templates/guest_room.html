@@ -3,9 +3,15 @@
 {% block content %}
 <h1 class="text-xl">Guest Room</h1>
 <div id="queue" class="my-4"></div>
+{% if role != 'listener' %}
 <div id="search" class="my-4">
   <input type="text" id="search-input" class="border p-2" placeholder="Search YouTube" />
   <div id="results" class="mt-2"></div>
 </div>
+{% endif %}
+<script>
+  window.roomId = "{{ room._id }}";
+  window.role = "{{ role }}";
+</script>
 <script src="/static/js/guest_room.js" defer></script>
 {% endblock %}
