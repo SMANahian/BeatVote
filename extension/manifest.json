@@ -1,0 +1,26 @@
+{
+  "manifest_version": 3,
+  "name": "BeatVote Player",
+  "version": "1.0",
+  "description": "Keeps the BeatVote host tab open and plays songs in a separate YouTube tab.",
+  "permissions": ["tabs"],
+  "host_permissions": ["http://localhost:5000/*", "https://www.youtube.com/*"],
+  "background": {
+    "service_worker": "background.js"
+  },
+  "content_scripts": [
+    {
+      "matches": ["https://www.youtube.com/*"],
+      "js": ["player.js"],
+      "run_at": "document_idle"
+    },
+    {
+      "matches": ["http://localhost:5000/rooms/*/host"],
+      "js": ["host.js"],
+      "run_at": "document_idle"
+    }
+  ],
+  "action": {
+    "default_title": "BeatVote Player"
+  }
+}

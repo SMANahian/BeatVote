@@ -121,6 +121,19 @@ make test
 
 The `docker-compose.yml` file defines services for the Flask app and MongoDB. This is suitable for local development.
 
+## Browser Extension
+
+A simple Brave/Chrome extension is provided in the `extension` directory. It keeps the host room page pinned and plays queued songs in a dedicated YouTube tab. On the host room page, click **Use Extension Player** to let the extension handle playback instead of the embedded player.
+
+### Installation
+
+1. Ensure the BeatVote server is running.
+2. Update `extension/background.js` to set `ROOM_ID` (and `SERVER_URL` if needed).
+3. In Brave, open `brave://extensions`.
+4. Enable **Developer mode**.
+5. Click **Load unpacked** and select the `extension` folder.
+6. The host page will open in a pinned tab. Click **Use Extension Player** on that page and songs from the queue will play in a separate tab.
+
 ## Notes
 
 Playback uses the YouTube IFrame Player API and requires a user gesture on the host page to enable audio because of browser autoplay policies.
