@@ -34,7 +34,9 @@ function renderQueue(queue) {
 }
 
 function fetchQueue() {
-  fetch(`/api/rooms/${window.roomId}/queue`).then((r) => r.json()).then(renderQueue);
+  fetch(`/api/rooms/${window.roomId}/queue`)
+    .then((r) => r.json())
+    .then((data) => renderQueue(data.queue));
 }
 
 if (window.roomId) {

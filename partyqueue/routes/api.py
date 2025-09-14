@@ -5,6 +5,7 @@ from ..services.queue_service import QueueService
 from ..services.vote_service import VoteService
 from ..extensions import mongo
 from ..models import SONGS_COLL, ROOMS_COLL
+from datetime import datetime, timezone
 
 api_bp = Blueprint("api", __name__)
 
@@ -23,7 +24,11 @@ def get_queue(room_id):
     ordered = QueueService.order_queue(queue)
     for s in ordered:
         s["_id"] = str(s["_id"])
-    return jsonify(ordered)
+    room = mongo.db[ROOMS_COLL].find_one({"_id": room_id}) or {}
+    current = room.get("current_song_id")
+    if current:
+        current = str(current)
+    return jsonify({"queue": ordered, "current_song_id": current})
 
 
 @api_bp.post("/rooms/<room_id>/queue/add")
@@ -76,5 +81,40 @@ def vote_song(room_id, song_id):
                 "score": song["score"],
             }
         },
+    )
+    return get_queue(room_id)
+
+
+@api_bp.post("/rooms/<room_id>/queue/<song_id>/remove")
+def remove_song(room_id, song_id):
+    song = mongo.db[SONGS_COLL].find_one({"_id": song_id, "room_id": room_id})
+    if not song:
+        return jsonify({"error": "not found"}), 404
+    room = mongo.db[ROOMS_COLL].find_one({"_id": room_id}) or {}
+    QueueService.delete_song(room, [song], song_id)
+    mongo.db[SONGS_COLL].update_one(
+        {"_id": song_id},
+        {
+            "$set": {
+                "removed_by_host": True,
+                "removed_at": song.get("removed_at", datetime.now(timezone.utc)),
+            }
+        },
+    )
+    mongo.db[ROOMS_COLL].update_one(
+        {"_id": room_id},
+        {"$set": {"deleted_video_ids": room.get("deleted_video_ids", [])}},
+    )
+    return get_queue(room_id)
+
+
+@api_bp.post("/rooms/<room_id>/queue/<song_id>/play")
+def play_song(room_id, song_id):
+    song = mongo.db[SONGS_COLL].find_one({"_id": song_id, "room_id": room_id})
+    if not song:
+        return jsonify({"error": "not found"}), 404
+    mongo.db[ROOMS_COLL].update_one(
+        {"_id": room_id},
+        {"$set": {"current_song_id": song_id}},
     )
     return get_queue(room_id)
