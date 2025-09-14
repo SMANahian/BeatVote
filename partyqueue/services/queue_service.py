@@ -17,7 +17,7 @@ class QueueService:
                 and not existing.get("removed_by_host")
                 and not existing.get("played")
             ):
-                return existing
+                return None
         song.setdefault("_id", ObjectId())
         song.setdefault("added_at", datetime.now(timezone.utc))
         song.setdefault("likes", [])
@@ -48,6 +48,13 @@ class QueueService:
 
     @staticmethod
     def get_next_song(room: dict, queue: List[dict]) -> dict | None:
+        current_id = room.get("current_song_id")
+        if current_id:
+            for s in queue:
+                if s.get("_id") == current_id:
+                    s["played"] = True
+                    break
+            room["current_song_id"] = None
         ordered = QueueService.order_queue(queue)
         if ordered and ordered[0].get("score", 0) >= 0:
             room["current_song_id"] = ordered[0]["_id"]
