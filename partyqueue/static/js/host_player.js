@@ -3,7 +3,19 @@ let currentSongId = null;
 const queueEl = document.getElementById('queue');
 
 function onYouTubeIframeAPIReady() {
-  player = new YT.Player('player');
+  player = new YT.Player('player', {
+    events: {
+      onStateChange: onPlayerStateChange,
+    },
+  });
+}
+
+function onPlayerStateChange(event) {
+  if (event.data === YT.PlayerState.ENDED) {
+    fetch(`/api/rooms/${window.roomId}/queue/next`, { method: 'POST' })
+      .then((r) => r.json())
+      .then(renderQueue);
+  }
 }
 
 function renderQueue(data) {
