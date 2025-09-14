@@ -1,4 +1,4 @@
-const SERVER_URL = "http://localhost:5000"; // Change if your server runs elsewhere
+const SERVER_URL = "http://127.0.0.1:5000"; // Change if your server runs elsewhere
 
 let playerTabId = null;
 let ROOM_ID = null;
@@ -10,7 +10,7 @@ chrome.storage.local.get('roomId', (res) => {
 
 function ensureHostTab() {
   if (!ROOM_ID) return;
-  const hostPage = `${SERVER_URL}/rooms/${ROOM_ID}/host`;
+  const hostPage = `${SERVER_URL}/${ROOM_ID}/host`;
   chrome.tabs.query({ url: `${SERVER_URL}/*` }, (tabs) => {
     const exists = tabs.some((t) => t.url === hostPage);
     if (!exists) {

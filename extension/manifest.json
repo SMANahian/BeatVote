@@ -6,7 +6,7 @@
 
   "permissions": ["tabs", "storage"],
 
-  "host_permissions": ["http://localhost:5000/*", "https://www.youtube.com/*"],
+  "host_permissions": ["http://127.0.0.1:5000/*", "https://www.youtube.com/*"],
   "background": {
     "service_worker": "background.js"
   },
@@ -17,7 +17,7 @@
       "run_at": "document_idle"
     },
     {
-      "matches": ["http://localhost:5000/rooms/*/host"],
+      "matches": ["http://127.0.0.1:5000/*/host"],
       "js": ["host.js"],
       "run_at": "document_idle"
     }
