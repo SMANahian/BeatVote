@@ -2,25 +2,25 @@
 {% block title %}Host Room{% endblock %}
 {% block content %}
 {% if room %}
-<h1 class="text-xl">Host Room: {{ room.name }}</h1>
-<p class="mb-2">Room ID: {{ room._id }}</p>
-<p class="mb-2">Listener code: {{ room.code_listener }}</p>
-<p class="mb-4">Suggestor code: {{ room.code_suggestor }}</p>
-<button id="use-extension" class="bg-gray-200 text-sm p-2 mb-2">Use Extension Player</button>
+<h1 class="text-2xl font-semibold mb-4">Host Room: {{ room.name }}</h1>
+<p class="mb-2">Room ID: <span class="font-mono">{{ room._id }}</span></p>
+<p class="mb-2">Listener code: <span class="font-mono">{{ room.code_listener }}</span></p>
+<p class="mb-4">Suggestor code: <span class="font-mono">{{ room.code_suggestor }}</span></p>
+<button id="use-extension" class="bg-gray-200 hover:bg-gray-300 text-sm px-3 py-1 rounded mb-4">Use Extension Player</button>
 <div id="player" class="my-4"></div>
-<ul id="queue"></ul>
+<ul id="queue" class="space-y-2"></ul>
 <script src="https://www.youtube.com/iframe_api"></script>
 <script>window.roomId = "{{ room._id }}";</script>
 <script src="/static/js/host_player.js" defer></script>
 {% else %}
-<h1 class="text-xl mb-4">Create Room</h1>
+<h1 class="text-2xl font-semibold mb-6 text-center">Create Room</h1>
 <form
   method="post"
   action="{{ url_for('rooms.create') }}"
-  class="flex flex-col gap-2"
+  class="flex flex-col gap-4 max-w-sm mx-auto"
 >
-  <input type="text" name="name" placeholder="Room Name" class="border p-2" />
-  <button class="bg-blue-500 text-white p-2" type="submit">Create</button>
+  <input type="text" name="name" placeholder="Room Name" class="p-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-400" />
+  <button class="bg-blue-600 hover:bg-blue-700 text-white p-2 rounded font-semibold" type="submit">Create</button>
 </form>
 {% endif %}
 {% endblock %}
