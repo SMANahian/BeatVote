@@ -1,14 +1,16 @@
-from datetime import datetime
+from datetime import datetime, timezone
 from werkzeug.security import generate_password_hash, check_password_hash
 from pymongo.collection import Collection
 
 
-def create_user(coll: Collection, email: str, username: str, password: str) -> str:
+def create_user(
+    coll: Collection, email: str, username: str, password: str
+) -> str:
     doc = {
         "email": email,
         "username": username,
         "password_hash": generate_password_hash(password),
-        "created_at": datetime.utcnow(),
+        "created_at": datetime.now(timezone.utc),
         "current_rooms_owned": [],
     }
     result = coll.insert_one(doc)

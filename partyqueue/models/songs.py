@@ -1,10 +1,17 @@
-from datetime import datetime
+from datetime import datetime, timezone
 from . import ObjectId
 
 
-def insert_song(coll, room_id: str, video_id: str, title: str,
-                thumbnail_url: str, duration_sec: int, added_by_user_id: str | None,
-                added_by_display_name: str) -> dict:
+def insert_song(
+    coll,
+    room_id: str,
+    video_id: str,
+    title: str,
+    thumbnail_url: str,
+    duration_sec: int,
+    added_by_user_id: str | None,
+    added_by_display_name: str,
+) -> dict:
     song = {
         "_id": ObjectId(),
         "room_id": room_id,
@@ -14,7 +21,7 @@ def insert_song(coll, room_id: str, video_id: str, title: str,
         "duration_sec": duration_sec,
         "added_by_user_id": added_by_user_id,
         "added_by_display_name": added_by_display_name,
-        "added_at": datetime.utcnow(),
+        "added_at": datetime.now(timezone.utc),
         "likes": [],
         "dislikes": [],
         "score": 0,
@@ -27,4 +34,8 @@ def insert_song(coll, room_id: str, video_id: str, title: str,
 
 
 def get_queue(coll, room_id: str) -> list[dict]:
-    return list(coll.find({"room_id": room_id, "played": False, "removed_by_host": False}))
+    return list(
+        coll.find(
+            {"room_id": room_id, "played": False, "removed_by_host": False}
+        )
+    )

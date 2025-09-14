@@ -1,7 +1,5 @@
-import sys, os
-sys.path.append(os.path.dirname(os.path.dirname(__file__)))
+from datetime import datetime, timedelta, timezone
 
-from datetime import datetime, timedelta
 from partyqueue.services.queue_service import QueueService
 from partyqueue.services.vote_service import VoteService
 
@@ -9,10 +7,28 @@ from partyqueue.services.vote_service import VoteService
 def test_queue_ordering():
     room = {"banned_video_ids": [], "deleted_video_ids": []}
     queue = []
-    now = datetime.utcnow()
-    s1 = QueueService.add_song(room, queue, {"video_id": "a", "title": "A", "added_at": now})
-    s2 = QueueService.add_song(room, queue, {"video_id": "b", "title": "B", "added_at": now + timedelta(seconds=1)})
-    s3 = QueueService.add_song(room, queue, {"video_id": "c", "title": "C", "added_at": now + timedelta(seconds=2)})
+    now = datetime.now(timezone.utc)
+    s1 = QueueService.add_song(
+        room, queue, {"video_id": "a", "title": "A", "added_at": now}
+    )
+    s2 = QueueService.add_song(
+        room,
+        queue,
+        {
+            "video_id": "b",
+            "title": "B",
+            "added_at": now + timedelta(seconds=1),
+        },
+    )
+    s3 = QueueService.add_song(
+        room,
+        queue,
+        {
+            "video_id": "c",
+            "title": "C",
+            "added_at": now + timedelta(seconds=2),
+        },
+    )
 
     VoteService.vote(s1, "u1", "like")
     VoteService.vote(s2, "u2", "like")
@@ -26,11 +42,25 @@ def test_queue_ordering():
 
 
 def test_auto_advance():
-    room = {"banned_video_ids": [], "deleted_video_ids": [], "current_song_id": None}
+    room = {
+        "banned_video_ids": [],
+        "deleted_video_ids": [],
+        "current_song_id": None,
+    }
     queue = []
-    now = datetime.utcnow()
-    s1 = QueueService.add_song(room, queue, {"video_id": "a", "title": "A", "added_at": now})
-    s2 = QueueService.add_song(room, queue, {"video_id": "b", "title": "B", "added_at": now + timedelta(seconds=1)})
+    now = datetime.now(timezone.utc)
+    s1 = QueueService.add_song(
+        room, queue, {"video_id": "a", "title": "A", "added_at": now}
+    )
+    s2 = QueueService.add_song(
+        room,
+        queue,
+        {
+            "video_id": "b",
+            "title": "B",
+            "added_at": now + timedelta(seconds=1),
+        },
+    )
     VoteService.vote(s1, "u1", "like")
     VoteService.vote(s2, "u2", "dislike")
     next_song = QueueService.get_next_song(room, queue)
