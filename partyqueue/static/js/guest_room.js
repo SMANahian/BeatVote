@@ -11,12 +11,20 @@ function renderQueue(queue) {
     const up = document.createElement('button');
     up.textContent = '▲';
     up.onclick = () => {
-      socket.emit('queue:vote', { room_id: window.roomId, song_id: s._id, vote: 'like' });
+      fetch(`/api/rooms/${window.roomId}/queue/${s._id}/vote`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ vote: 'like' })
+      }).then(fetchQueue);
     };
     const down = document.createElement('button');
     down.textContent = '▼';
     down.onclick = () => {
-      socket.emit('queue:vote', { room_id: window.roomId, song_id: s._id, vote: 'dislike' });
+      fetch(`/api/rooms/${window.roomId}/queue/${s._id}/vote`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ vote: 'dislike' })
+      }).then(fetchQueue);
     };
     row.appendChild(title);
     row.appendChild(up);
@@ -25,9 +33,13 @@ function renderQueue(queue) {
   });
 }
 
-if (window.roomId) {
+function fetchQueue() {
   fetch(`/api/rooms/${window.roomId}/queue`).then((r) => r.json()).then(renderQueue);
-  socket.on('queue:updated', renderQueue);
+}
+
+if (window.roomId) {
+  fetchQueue();
+  setInterval(fetchQueue, 5000);
 }
 
 if (document.getElementById('search-input')) {
@@ -51,7 +63,11 @@ if (document.getElementById('search-input')) {
       const btn = document.createElement('button');
       btn.textContent = 'Add';
       btn.onclick = () => {
-        socket.emit('queue:add', { room_id: window.roomId, video_id: v.video_id, title: v.title });
+        fetch(`/api/rooms/${window.roomId}/queue/add`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ video_id: v.video_id, title: v.title })
+        }).then(fetchQueue);
       };
       item.appendChild(thumb);
       item.appendChild(title);
