@@ -118,3 +118,20 @@ def play_song(room_id, song_id):
         {"$set": {"current_song_id": song_id}},
     )
     return get_queue(room_id)
+
+
+@api_bp.post("/rooms/<room_id>/queue/next")
+def next_song(room_id):
+    """Mark the current song as played and advance to the next one."""
+    room = mongo.db[ROOMS_COLL].find_one({"_id": room_id}) or {}
+    current_id = room.get("current_song_id")
+    if current_id:
+        mongo.db[SONGS_COLL].update_one({"_id": current_id}, {"$set": {"played": True}})
+    queue = list(mongo.db[SONGS_COLL].find({"room_id": room_id}))
+    room["current_song_id"] = None
+    QueueService.get_next_song(room, queue)
+    mongo.db[ROOMS_COLL].update_one(
+        {"_id": room_id},
+        {"$set": {"current_song_id": room.get("current_song_id")}},
+    )
+    return get_queue(room_id)
