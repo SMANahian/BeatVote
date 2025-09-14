@@ -1,6 +1,6 @@
-# PartyQueue
+# BeatVote
 
-PartyQueue is a Flask + MongoDB web application for running collaborative karaoke or party music rooms. Users can search YouTube, add songs to a shared queue and vote.
+BeatVote is a Flask + MongoDB web application for running collaborative karaoke or party music rooms. Users can search YouTube, add songs to a shared queue and vote.
 
 ## Features
 
@@ -38,7 +38,7 @@ cp .env.example .env
 
 - `FLASK_ENV` – development or production mode
 - `SECRET_KEY` – random string used by Flask for session security
-- `MONGO_URI` – connection string for MongoDB (e.g. `mongodb://localhost:27017/partyqueue`)
+- `MONGO_URI` – connection string for MongoDB (e.g. `mongodb://localhost:27017/beatvote`)
   (`MONGODB_URI` is also accepted)
 - `YOUTUBE_API_KEY` – API key for the YouTube Data API v3
 
@@ -83,7 +83,7 @@ sudo apt-get install -y mongodb-org
 sudo systemctl start mongod
 ```
 
-The application expects MongoDB at `mongodb://localhost:27017/partyqueue` by
+The application expects MongoDB at `mongodb://localhost:27017/beatvote` by
 default. You can change this by setting `MONGO_URI` in `.env` (or
 `MONGODB_URI`).
 

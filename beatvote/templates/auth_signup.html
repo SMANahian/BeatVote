@@ -1,10 +1,11 @@
 {% extends 'base.html' %}
-{% block title %}Login - PartyQueue{% endblock %}
+{% block title %}Sign Up - BeatVote{% endblock %}
 {% block content %}
-<h1 class="text-xl mb-4">Login</h1>
+<h1 class="text-xl mb-4">Sign Up</h1>
 <form method="post" class="flex flex-col gap-2">
   <input type="email" name="email" placeholder="Email" class="p-2 border" required />
+  <input type="text" name="username" placeholder="Username" class="p-2 border" required />
   <input type="password" name="password" placeholder="Password" class="p-2 border" required />
-  <button class="bg-blue-500 text-white p-2" type="submit">Login</button>
+  <button class="bg-green-500 text-white p-2" type="submit">Create Account</button>
 </form>
 {% endblock %}

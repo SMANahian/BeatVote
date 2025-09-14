@@ -1,7 +1,7 @@
 from datetime import datetime, timedelta, timezone
 
-from partyqueue.services.queue_service import QueueService
-from partyqueue.services.vote_service import VoteService
+from beatvote.services.queue_service import QueueService
+from beatvote.services.vote_service import VoteService
 
 
 def test_queue_ordering():

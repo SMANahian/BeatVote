@@ -2,9 +2,9 @@ import sys, os
 sys.path.append(os.path.dirname(os.path.dirname(__file__)))
 
 from bson import ObjectId
-from partyqueue.services import auth_service
-from partyqueue.extensions import mongo
-from partyqueue.models import USERS_COLL
+from beatvote.services import auth_service
+from beatvote.extensions import mongo
+from beatvote.models import USERS_COLL
 
 
 class DummyCollection:

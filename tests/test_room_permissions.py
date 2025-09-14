@@ -1,8 +1,8 @@
 import sys, os
 sys.path.append(os.path.dirname(os.path.dirname(__file__)))
 
-from partyqueue.services.queue_service import QueueService
-from partyqueue.services import room_service
+from beatvote.services.queue_service import QueueService
+from beatvote.services import room_service
 
 
 def test_ban_and_delete_logic():
