@@ -1,1 +1,35 @@
 body { font-family: sans-serif; }
+
+.btn {
+  padding: 0.5rem 1rem;
+  border-radius: 0.375rem;
+  font-weight: 500;
+  transition: background-color 0.2s;
+}
+
+.btn-primary {
+  background-color: #3b82f6;
+  color: #fff;
+}
+
+.btn-primary:hover {
+  background-color: #2563eb;
+}
+
+.btn-secondary {
+  background-color: #22c55e;
+  color: #fff;
+}
+
+.btn-secondary:hover {
+  background-color: #16a34a;
+}
+
+.btn-link {
+  background-color: transparent;
+  color: #3b82f6;
+}
+
+.btn-link:hover {
+  color: #2563eb;
+}
