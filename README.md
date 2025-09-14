@@ -1,12 +1,12 @@
 # PartyQueue
 
-PartyQueue is a Flask + MongoDB + Socket.IO web application for running collaborative karaoke or party music rooms. Users can search YouTube, add songs to a shared queue and vote in real time.
+PartyQueue is a Flask + MongoDB web application for running collaborative karaoke or party music rooms. Users can search YouTube, add songs to a shared queue and vote.
 
 ## Features
 
 - Email/password authentication with Flask-Login
 - Guest access via cookies
-- Realtime queue and chat powered by Socket.IO
+- Queue updates via simple HTTP polling
 - YouTube Data API search proxy
 - MongoDB for persistence
 
