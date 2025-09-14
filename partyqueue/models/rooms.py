@@ -1,6 +1,4 @@
-from datetime import datetime
-import random
-from datetime import datetime
+from datetime import datetime, timezone
 import random
 import string
 from . import ObjectId
@@ -20,7 +18,7 @@ def create_room(coll, name: str, host_user_id: str) -> dict:
         "code_listener": _generate_code("L"),
         "code_suggestor": _generate_code("S"),
         "active": True,
-        "created_at": datetime.utcnow(),
+        "created_at": datetime.now(timezone.utc),
         "deleted_video_ids": [],
         "banned_video_ids": [],
         "current_song_id": None,
