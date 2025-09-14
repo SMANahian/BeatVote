@@ -34,8 +34,12 @@ def insert_song(
 
 
 def get_queue(coll, room_id: str) -> list[dict]:
-    return list(
-        coll.find(
-            {"room_id": room_id, "played": False, "removed_by_host": False}
-        )
+    songs = list(coll.find({"room_id": room_id}))
+    return sorted(
+        [
+            s
+            for s in songs
+            if not s.get("played") and not s.get("removed_by_host")
+        ],
+        key=lambda s: (-s.get("score", 0), s["added_at"]),
     )
