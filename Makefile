@@ -1,10 +1,10 @@
 .PHONY: run dev format lint test
 
 run:
-	FLASK_APP=partyqueue.app flask run
+	flask --app partyqueue.app socketio run
 
 dev:
-	FLASK_APP=partyqueue.app FLASK_ENV=development flask run --reload
+	flask --app partyqueue.app --debug socketio run
 
 format:
 	black .

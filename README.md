@@ -99,6 +99,12 @@ docker-compose up
 make dev
 ```
 
+This starts the Socket.IO server with eventlet. You can also run it manually:
+
+```bash
+flask --app partyqueue.app socketio run --debug
+```
+
 The app will be available at [http://localhost:5000](http://localhost:5000).
 
 ## Testing
@@ -112,7 +118,7 @@ make test
 ## Makefile Targets
 
 - `make run` – start server
-- `make dev` – development mode with reload
+- `make dev` – start server in debug mode with reload
 - `make format` – run black
 - `make lint` – run flake8
 - `make test` – run pytest
