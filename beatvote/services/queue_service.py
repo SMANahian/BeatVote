@@ -24,6 +24,7 @@ class QueueService:
         song.setdefault("dislikes", [])
         song.setdefault("score", 0)
         song.setdefault("played", False)
+        song.setdefault("playing", False)
         song.setdefault("removed_by_host", False)
         queue.append(song)
         return song
@@ -41,7 +42,11 @@ class QueueService:
             [
                 s
                 for s in queue
-                if not s.get("removed_by_host") and not s.get("played")
+                if (
+                    not s.get("removed_by_host")
+                    and not s.get("played")
+                    and not s.get("playing")
+                )
             ],
             key=lambda s: (-s.get("score", 0), s["added_at"]),
         )

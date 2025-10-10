@@ -1,7 +1,13 @@
 const resultsEl = document.getElementById('results');
 const queueEl = document.getElementById('queue');
+const currentSongTitle = document.getElementById('current-song-title');
 
-function renderQueue(queue) {
+function renderQueue(data) {
+  const queue = data.queue;
+  const current = data.current_song;
+  if (currentSongTitle) {
+    currentSongTitle.textContent = current ? current.title : 'Nothing playing';
+  }
   queueEl.innerHTML = '';
   queue.forEach((s) => {
     const row = document.createElement('div');
@@ -36,7 +42,7 @@ function renderQueue(queue) {
 function fetchQueue() {
   fetch(`/api/rooms/${window.roomId}/queue`)
     .then((r) => r.json())
-    .then((data) => renderQueue(data.queue));
+    .then((data) => renderQueue(data));
 }
 
 if (window.roomId) {

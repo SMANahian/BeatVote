@@ -2,6 +2,10 @@
 {% block title %}Guest Room{% endblock %}
 {% block content %}
 <h1 class="text-xl">Guest Room</h1>
+<div id="current-song" class="border rounded p-4 my-4 bg-white shadow-sm">
+  <h2 class="font-semibold mb-2">Currently playing</h2>
+  <p id="current-song-title" class="text-lg text-gray-700">Nothing playing</p>
+</div>
 <div id="queue" class="my-4"></div>
 {% if role != 'listener' %}
 <div id="search" class="my-4">
