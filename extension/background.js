@@ -2,6 +2,7 @@ const SERVER_URL = "http://127.0.0.1:5000"; // Change if your server runs elsewh
 
 let playerTabId = null;
 let ROOM_ID = null;
+let currentSongId = null;
 let currentVideoId = null; // Track the currently playing video ID
 
 chrome.storage.local.get('roomId', (res) => {
@@ -49,6 +50,8 @@ async function ensurePlayback() {
 
     // No song to play, leave existing player tab until current video ends
     if (!currentId && !currentSong) {
+      currentSongId = null;
+      currentVideoId = null;
       return;
     }
 
@@ -56,12 +59,17 @@ async function ensurePlayback() {
       currentSong = queue.find((s) => s._id === currentId);
     }
 
-    if (!currentSong) return;
+    if (!currentSong) {
+      currentSongId = null;
+      currentVideoId = null;
+      return;
+    }
 
     const url = `https://www.youtube.com/watch?v=${currentSong.video_id}`;
 
-    // Only create/update tab if video_id is different
-    if (currentSong.video_id !== currentVideoId) {
+    // Only create/update tab if song differs
+    if (currentSong._id !== currentSongId) {
+      currentSongId = currentSong._id;
       currentVideoId = currentSong.video_id;
       if (playerTabId == null) {
         chrome.tabs.create({ url }, (tab) => {
@@ -79,7 +87,7 @@ async function ensurePlayback() {
         });
       }
     }
-    // If same video, do nothing (prevents reload loop)
+    // If same song, do nothing (prevents reload loop)
   } catch (e) {
     console.error("Failed to ensure playback", e);
   }
@@ -94,6 +102,8 @@ async function advanceAndPlayNext() {
   } catch (e) {
     console.error("Failed to advance queue", e);
   }
+  currentSongId = null;
+  currentVideoId = null;
   ensurePlayback();
 }
 
@@ -127,6 +137,7 @@ chrome.runtime.onMessage.addListener((msg, sender) => {
 chrome.tabs.onRemoved.addListener((tabId) => {
   if (tabId === playerTabId) {
     playerTabId = null;
+    currentSongId = null;
     currentVideoId = null; // Reset when tab is closed
   }
 });

@@ -1,6 +1,8 @@
 from flask import Blueprint, request, jsonify
 from flask_login import login_required, current_user
 from ..services.youtube_service import search_videos
+from copy import deepcopy
+
 from ..services.queue_service import QueueService
 from ..services.vote_service import VoteService
 from ..extensions import mongo
@@ -19,24 +21,42 @@ def youtube_search():
 
 
 @api_bp.get("/rooms/<room_id>/queue")
+def _serialize_song(song: dict | None) -> dict | None:
+    if not song:
+        return None
+    serialized = deepcopy(song)
+    if "_id" in serialized:
+        serialized["_id"] = str(serialized["_id"])
+    return serialized
+
+
 def get_queue(room_id):
     queue = list(mongo.db[SONGS_COLL].find({"room_id": room_id}))
     ordered = QueueService.order_queue(queue)
     for s in ordered:
         s["_id"] = str(s["_id"])
     room = mongo.db[ROOMS_COLL].find_one({"_id": room_id}) or {}
+    current_song_data = room.get("current_song")
     current = room.get("current_song_id")
-    if current:
-        current = str(current)
+    current_song = None
+    current_id_str = None
+    if current_song_data:
+        current_song = _serialize_song(current_song_data)
+    elif current:
         current_song = mongo.db[SONGS_COLL].find_one(
             {"_id": current, "room_id": room_id}
         )
-    else:
-        current_song = None
-    if current_song:
-        current_song["_id"] = str(current_song["_id"])
+        current_song = _serialize_song(current_song)
+    if current_song and not current:
+        current = current_song.get("_id")
+    if current:
+        current_id_str = str(current)
     return jsonify(
-        {"queue": ordered, "current_song_id": current, "current_song": current_song}
+        {
+            "queue": ordered,
+            "current_song_id": current_id_str,
+            "current_song": current_song,
+        }
     )
 
 
@@ -131,19 +151,29 @@ def play_song(room_id, song_id):
     current_id = room.get("current_song_id")
     now = datetime.now(timezone.utc)
     if current_id and current_id != song_id:
-        mongo.db[SONGS_COLL].update_one(
-            {"_id": current_id},
-            {"$set": {"played": True, "playing": False, "finished_at": now}},
+        mongo.db[ROOMS_COLL].update_one(
+            {"_id": room_id},
+            {
+                "$set": {
+                    "last_finished_song": room.get("current_song"),
+                    "current_song": None,
+                    "current_song_id": None,
+                    "last_finished_at": now,
+                }
+            },
         )
-    if current_id == song_id and song.get("playing"):
-        return get_queue(room_id)
+    mongo.db[SONGS_COLL].delete_one({"_id": song_id})
+    song_payload = deepcopy(song)
+    song_payload["_id"] = song_id
+    song_payload["started_at"] = now
     mongo.db[ROOMS_COLL].update_one(
         {"_id": room_id},
-        {"$set": {"current_song_id": song_id}},
-    )
-    mongo.db[SONGS_COLL].update_one(
-        {"_id": song_id},
-        {"$set": {"playing": True, "played": False, "started_at": now}},
+        {
+            "$set": {
+                "current_song_id": song_id,
+                "current_song": song_payload,
+            }
+        },
     )
     return get_queue(room_id)
 
@@ -152,34 +182,33 @@ def play_song(room_id, song_id):
 def next_song(room_id):
     """Mark the current song as played and advance to the next one."""
     room = mongo.db[ROOMS_COLL].find_one({"_id": room_id}) or {}
-    current_id = room.get("current_song_id")
-    if current_id:
-        mongo.db[SONGS_COLL].update_one(
-            {"_id": current_id},
-            {
-                "$set": {
-                    "played": True,
-                    "playing": False,
-                    "finished_at": datetime.now(timezone.utc),
-                }
-            },
-        )
-    queue = list(mongo.db[SONGS_COLL].find({"room_id": room_id}))
-    room["current_song_id"] = None
-    next_up = QueueService.get_next_song(room, queue)
-    if next_up:
-        mongo.db[SONGS_COLL].update_one(
-            {"_id": next_up["_id"]},
-            {
-                "$set": {
-                    "playing": True,
-                    "played": False,
-                    "started_at": datetime.now(timezone.utc),
-                }
-            },
-        )
+    now = datetime.now(timezone.utc)
+    update_doc: dict = {
+        "current_song_id": None,
+        "current_song": None,
+        "last_finished_song": room.get("current_song"),
+        "last_finished_at": now,
+    }
     mongo.db[ROOMS_COLL].update_one(
         {"_id": room_id},
-        {"$set": {"current_song_id": room.get("current_song_id")}},
+        {"$set": update_doc},
     )
+    queue = list(mongo.db[SONGS_COLL].find({"room_id": room_id}))
+    next_up = QueueService.get_next_song(room, queue)
+    new_current_id = next_up["_id"] if next_up else None
+    room["current_song_id"] = new_current_id
+    if next_up:
+        mongo.db[SONGS_COLL].delete_one({"_id": next_up["_id"]})
+        next_payload = deepcopy(next_up)
+        next_payload["started_at"] = now
+        next_payload["_id"] = next_up["_id"]
+        mongo.db[ROOMS_COLL].update_one(
+            {"_id": room_id},
+            {
+                "$set": {
+                    "current_song_id": new_current_id,
+                    "current_song": next_payload,
+                }
+            },
+        )
     return get_queue(room_id)
