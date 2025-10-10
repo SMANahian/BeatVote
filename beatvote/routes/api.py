@@ -26,17 +26,21 @@ def get_queue(room_id):
         s["_id"] = str(s["_id"])
     room = mongo.db[ROOMS_COLL].find_one({"_id": room_id}) or {}
     current = room.get("current_song_id")
+    current_song = None
+    current_id_str = None
     if current:
-        current = str(current)
         current_song = mongo.db[SONGS_COLL].find_one(
             {"_id": current, "room_id": room_id}
         )
-    else:
-        current_song = None
+        current_id_str = str(current)
     if current_song:
         current_song["_id"] = str(current_song["_id"])
     return jsonify(
-        {"queue": ordered, "current_song_id": current, "current_song": current_song}
+        {
+            "queue": ordered,
+            "current_song_id": current_id_str,
+            "current_song": current_song,
+        }
     )
 
 
