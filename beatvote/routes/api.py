@@ -168,6 +168,7 @@ def next_song(room_id):
                 }
             },
         )
+        mongo.db[SONGS_COLL].delete_one({"_id": current_id})
     queue = list(mongo.db[SONGS_COLL].find({"room_id": room_id}))
     next_up = QueueService.get_next_song(room, queue)
     new_current_id = next_up["_id"] if next_up else None
