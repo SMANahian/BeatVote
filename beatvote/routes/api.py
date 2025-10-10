@@ -26,17 +26,21 @@ def get_queue(room_id):
         s["_id"] = str(s["_id"])
     room = mongo.db[ROOMS_COLL].find_one({"_id": room_id}) or {}
     current = room.get("current_song_id")
+    current_song = None
+    current_id_str = None
     if current:
-        current = str(current)
         current_song = mongo.db[SONGS_COLL].find_one(
             {"_id": current, "room_id": room_id}
         )
-    else:
-        current_song = None
+        current_id_str = str(current)
     if current_song:
         current_song["_id"] = str(current_song["_id"])
     return jsonify(
-        {"queue": ordered, "current_song_id": current, "current_song": current_song}
+        {
+            "queue": ordered,
+            "current_song_id": current_id_str,
+            "current_song": current_song,
+        }
     )
 
 
@@ -165,8 +169,9 @@ def next_song(room_id):
             },
         )
     queue = list(mongo.db[SONGS_COLL].find({"room_id": room_id}))
-    room["current_song_id"] = None
     next_up = QueueService.get_next_song(room, queue)
+    new_current_id = next_up["_id"] if next_up else None
+    room["current_song_id"] = new_current_id
     if next_up:
         mongo.db[SONGS_COLL].update_one(
             {"_id": next_up["_id"]},
@@ -180,6 +185,6 @@ def next_song(room_id):
         )
     mongo.db[ROOMS_COLL].update_one(
         {"_id": room_id},
-        {"$set": {"current_song_id": room.get("current_song_id")}},
+        {"$set": {"current_song_id": new_current_id}},
     )
     return get_queue(room_id)
