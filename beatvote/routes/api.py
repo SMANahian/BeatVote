@@ -165,7 +165,6 @@ def next_song(room_id):
             },
         )
     queue = list(mongo.db[SONGS_COLL].find({"room_id": room_id}))
-    room["current_song_id"] = None
     next_up = QueueService.get_next_song(room, queue)
     new_current_id = next_up["_id"] if next_up else None
     room["current_song_id"] = new_current_id

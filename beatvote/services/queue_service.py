@@ -54,7 +54,11 @@ class QueueService:
     @staticmethod
     def get_next_song(room: dict, queue: List[dict]) -> dict | None:
         ordered = QueueService.order_queue(queue)
-        if ordered and ordered[0].get("score", 0) >= 0:
-            room["current_song_id"] = ordered[0]["_id"]
-            return ordered[0]
+        current_id = room.get("current_song_id")
+        for song in ordered:
+            if current_id and song["_id"] == current_id:
+                continue
+            if song.get("score", 0) >= 0:
+                room["current_song_id"] = song["_id"]
+                return song
         return None
