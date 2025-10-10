@@ -27,31 +27,42 @@ async function ensurePlayback() {
     let res = await fetch(`${SERVER_URL}/api/rooms/${ROOM_ID}/queue`);
     let data = await res.json();
     let currentId = data.current_song_id;
+    let currentSong = data.current_song;
+    if (!currentId && currentSong) {
+      currentId = currentSong._id;
+    }
     let queue = data.queue;
 
     // If nothing is marked as current but the queue has songs, advance to next
-    if (!currentId && queue.length > 0) {
+    if (!currentId && !currentSong && queue.length > 0) {
       res = await fetch(`${SERVER_URL}/api/rooms/${ROOM_ID}/queue/next`, {
         method: "POST",
       });
       data = await res.json();
       currentId = data.current_song_id;
+      currentSong = data.current_song;
       queue = data.queue;
+      if (!currentId && currentSong) {
+        currentId = currentSong._id;
+      }
     }
 
     // No song to play, leave existing player tab until current video ends
-    if (!currentId) {
+    if (!currentId && !currentSong) {
       return;
     }
 
-    const current = queue.find((s) => s._id === currentId);
-    if (!current) return;
+    if (!currentSong && currentId) {
+      currentSong = queue.find((s) => s._id === currentId);
+    }
 
-    const url = `https://www.youtube.com/watch?v=${current.video_id}`;
+    if (!currentSong) return;
+
+    const url = `https://www.youtube.com/watch?v=${currentSong.video_id}`;
 
     // Only create/update tab if video_id is different
-    if (current.video_id !== currentVideoId) {
-      currentVideoId = current.video_id;
+    if (currentSong.video_id !== currentVideoId) {
+      currentVideoId = currentSong.video_id;
       if (playerTabId == null) {
         chrome.tabs.create({ url }, (tab) => {
           playerTabId = tab.id;

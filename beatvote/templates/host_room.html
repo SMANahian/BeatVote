@@ -8,6 +8,10 @@
 <p class="mb-4">Suggestor code: {{ room.code_suggestor }}</p>
 <button id="use-extension" class="bg-gray-200 text-sm p-2 mb-2">Use Extension Player</button>
 <div id="player" class="my-4"></div>
+<div id="current-song" class="border rounded p-4 my-4 bg-white shadow-sm">
+  <h2 class="font-semibold mb-2">Currently playing</h2>
+  <p id="current-song-title" class="text-lg text-gray-700">Nothing playing</p>
+</div>
 <ul id="queue"></ul>
 <script src="https://www.youtube.com/iframe_api"></script>
 <script>window.roomId = "{{ room._id }}";</script>

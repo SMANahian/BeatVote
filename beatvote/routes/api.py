@@ -28,7 +28,16 @@ def get_queue(room_id):
     current = room.get("current_song_id")
     if current:
         current = str(current)
-    return jsonify({"queue": ordered, "current_song_id": current})
+        current_song = mongo.db[SONGS_COLL].find_one(
+            {"_id": current, "room_id": room_id}
+        )
+    else:
+        current_song = None
+    if current_song:
+        current_song["_id"] = str(current_song["_id"])
+    return jsonify(
+        {"queue": ordered, "current_song_id": current, "current_song": current_song}
+    )
 
 
 @api_bp.post("/rooms/<room_id>/queue/add")
@@ -71,6 +80,11 @@ def vote_song(room_id, song_id):
     song = mongo.db[SONGS_COLL].find_one({"_id": song_id, "room_id": room_id})
     if not song:
         return jsonify({"error": "not found"}), 404
+    room = mongo.db[ROOMS_COLL].find_one({"_id": room_id}) or {}
+    if room.get("current_song_id") == song_id or song.get("playing"):
+        return jsonify({"error": "song is currently playing"}), 400
+    if song.get("played"):
+        return jsonify({"error": "song already played"}), 400
     VoteService.vote(song, user_id, vote)
     mongo.db[SONGS_COLL].update_one(
         {"_id": song_id},
@@ -113,9 +127,23 @@ def play_song(room_id, song_id):
     song = mongo.db[SONGS_COLL].find_one({"_id": song_id, "room_id": room_id})
     if not song:
         return jsonify({"error": "not found"}), 404
+    room = mongo.db[ROOMS_COLL].find_one({"_id": room_id}) or {}
+    current_id = room.get("current_song_id")
+    now = datetime.now(timezone.utc)
+    if current_id and current_id != song_id:
+        mongo.db[SONGS_COLL].update_one(
+            {"_id": current_id},
+            {"$set": {"played": True, "playing": False, "finished_at": now}},
+        )
+    if current_id == song_id and song.get("playing"):
+        return get_queue(room_id)
     mongo.db[ROOMS_COLL].update_one(
         {"_id": room_id},
         {"$set": {"current_song_id": song_id}},
+    )
+    mongo.db[SONGS_COLL].update_one(
+        {"_id": song_id},
+        {"$set": {"playing": True, "played": False, "started_at": now}},
     )
     return get_queue(room_id)
 
@@ -126,10 +154,30 @@ def next_song(room_id):
     room = mongo.db[ROOMS_COLL].find_one({"_id": room_id}) or {}
     current_id = room.get("current_song_id")
     if current_id:
-        mongo.db[SONGS_COLL].update_one({"_id": current_id}, {"$set": {"played": True}})
+        mongo.db[SONGS_COLL].update_one(
+            {"_id": current_id},
+            {
+                "$set": {
+                    "played": True,
+                    "playing": False,
+                    "finished_at": datetime.now(timezone.utc),
+                }
+            },
+        )
     queue = list(mongo.db[SONGS_COLL].find({"room_id": room_id}))
     room["current_song_id"] = None
-    QueueService.get_next_song(room, queue)
+    next_up = QueueService.get_next_song(room, queue)
+    if next_up:
+        mongo.db[SONGS_COLL].update_one(
+            {"_id": next_up["_id"]},
+            {
+                "$set": {
+                    "playing": True,
+                    "played": False,
+                    "started_at": datetime.now(timezone.utc),
+                }
+            },
+        )
     mongo.db[ROOMS_COLL].update_one(
         {"_id": room_id},
         {"$set": {"current_song_id": room.get("current_song_id")}},

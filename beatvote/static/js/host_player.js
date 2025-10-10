@@ -3,6 +3,7 @@ let currentSongId = null;
 let currentVideoId = null;
 const queueEl = document.getElementById('queue');
 const toggleBtn = document.getElementById('use-extension');
+const currentSongTitle = document.getElementById('current-song-title');
 
 let useExtension = true;
 const storedPref = localStorage.getItem('useExtension');
@@ -91,18 +92,32 @@ function renderQueue(data) {
     queueEl.appendChild(li);
   });
 
-  let nextSong = queue[0];
-  if (data.current_song_id) {
-    const found = queue.find((s) => s._id === data.current_song_id);
-    if (found) {
-      nextSong = found;
+  const current = data.current_song;
+  if (currentSongTitle) {
+    if (current) {
+      currentSongTitle.textContent = current.title;
+    } else {
+      currentSongTitle.textContent = 'Nothing playing';
     }
   }
-  if (nextSong && nextSong._id !== currentSongId) {
-    currentSongId = nextSong._id;
-    currentVideoId = nextSong.video_id;
+
+  if (current && current._id !== currentSongId) {
+    currentSongId = current._id;
+    currentVideoId = current.video_id;
     if (player && !useExtension) {
-      player.loadVideoById(nextSong.video_id);
+      player.loadVideoById(current.video_id);
+    }
+  }
+
+  if (!current && currentSongId) {
+    currentSongId = null;
+    currentVideoId = null;
+    if (player && !useExtension) {
+      try {
+        player.stopVideo();
+      } catch (e) {
+        // ignore
+      }
     }
   }
 }
