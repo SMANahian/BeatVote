@@ -2,7 +2,7 @@ const SERVER_URL = "http://127.0.0.1:5000"; // Change if your server runs elsewh
 
 let playerTabId = null;
 let ROOM_ID = null;
-let currentVideoId = null; // Track the currently playing video ID
+let currentSongId = null; // Track the currently playing song entry
 
 chrome.storage.local.get('roomId', (res) => {
   ROOM_ID = res.roomId;
@@ -49,6 +49,7 @@ async function ensurePlayback() {
 
     // No song to play, leave existing player tab until current video ends
     if (!currentId && !currentSong) {
+      currentSongId = null;
       return;
     }
 
@@ -58,11 +59,12 @@ async function ensurePlayback() {
 
     if (!currentSong) return;
 
+    const nextSongId = currentSong._id || currentId;
     const url = `https://www.youtube.com/watch?v=${currentSong.video_id}`;
 
-    // Only create/update tab if video_id is different
-    if (currentSong.video_id !== currentVideoId) {
-      currentVideoId = currentSong.video_id;
+    // Only create/update tab if the song entry is different
+    if (nextSongId !== currentSongId) {
+      currentSongId = nextSongId;
       if (playerTabId == null) {
         chrome.tabs.create({ url }, (tab) => {
           playerTabId = tab.id;
@@ -79,7 +81,7 @@ async function ensurePlayback() {
         });
       }
     }
-    // If same video, do nothing (prevents reload loop)
+    // If same song entry, do nothing (prevents reload loop)
   } catch (e) {
     console.error("Failed to ensure playback", e);
   }
@@ -127,6 +129,6 @@ chrome.runtime.onMessage.addListener((msg, sender) => {
 chrome.tabs.onRemoved.addListener((tabId) => {
   if (tabId === playerTabId) {
     playerTabId = null;
-    currentVideoId = null; // Reset when tab is closed
+    currentSongId = null; // Reset when tab is closed
   }
 });
