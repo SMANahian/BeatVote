@@ -3,6 +3,19 @@ const SERVER_URL = "http://127.0.0.1:5000"; // Change if your server runs elsewh
 let playerTabId = null;
 let ROOM_ID = null;
 let currentSongId = null; // Track the currently playing song entry
+let lastCompletedSongId = null; // Track the most recently finished song
+let pendingAdvance = false; // True while we're waiting for the backend to advance
+let ensureRetryTimer = null; // Timer used to re-try ensurePlayback when needed
+
+function scheduleEnsureRetry(delay = 1000) {
+  if (ensureRetryTimer) {
+    return;
+  }
+  ensureRetryTimer = setTimeout(() => {
+    ensureRetryTimer = null;
+    ensurePlayback();
+  }, delay);
+}
 
 chrome.storage.local.get('roomId', (res) => {
   ROOM_ID = res.roomId;
@@ -50,6 +63,8 @@ async function ensurePlayback() {
     // No song to play, leave existing player tab until current video ends
     if (!currentId && !currentSong) {
       currentSongId = null;
+      lastCompletedSongId = null;
+      pendingAdvance = false;
       return;
     }
 
@@ -62,9 +77,18 @@ async function ensurePlayback() {
     const nextSongId = currentSong._id || currentId;
     const url = `https://www.youtube.com/watch?v=${currentSong.video_id}`;
 
+    if (pendingAdvance && nextSongId === lastCompletedSongId) {
+      // We're still waiting for the backend to move to the next song. Try again shortly.
+      scheduleEnsureRetry();
+      return;
+    }
+
     // Only create/update tab if the song entry is different
     if (nextSongId !== currentSongId) {
       currentSongId = nextSongId;
+      pendingAdvance = false;
+      ensureRetryTimer && clearTimeout(ensureRetryTimer);
+      ensureRetryTimer = null;
       if (playerTabId == null) {
         chrome.tabs.create({ url }, (tab) => {
           playerTabId = tab.id;
@@ -90,9 +114,22 @@ async function ensurePlayback() {
 async function advanceAndPlayNext() {
   if (!ROOM_ID) return;
   try {
-    await fetch(`${SERVER_URL}/api/rooms/${ROOM_ID}/queue/next`, {
+    const res = await fetch(`${SERVER_URL}/api/rooms/${ROOM_ID}/queue/next`, {
       method: "POST",
     });
+    if (res && res.ok) {
+      try {
+        const data = await res.json();
+        const nextId =
+          data.current_song_id || (data.current_song && data.current_song._id);
+        if (nextId && nextId === lastCompletedSongId) {
+          // The backend hasn't advanced yet – retry shortly and avoid replay.
+          scheduleEnsureRetry();
+        }
+      } catch (err) {
+        console.warn("Failed to parse queue response", err);
+      }
+    }
   } catch (e) {
     console.error("Failed to advance queue", e);
   }
@@ -109,6 +146,10 @@ chrome.runtime.onStartup.addListener(init);
 
 chrome.runtime.onMessage.addListener((msg, sender) => {
   if (msg.type === "video-ended") {
+    if (currentSongId) {
+      lastCompletedSongId = currentSongId;
+      pendingAdvance = true;
+    }
     if (sender.tab) {
       chrome.tabs.remove(sender.tab.id);
       if (sender.tab.id === playerTabId) {
