@@ -20,68 +20,93 @@ function ensureHostTab() {
   });
 }
 
+function resolveCurrentSong(data) {
+  if (!data) return null;
+  let currentId = data.current_song_id;
+  let currentSong = data.current_song;
+
+  if (!currentId && currentSong) {
+    currentId = currentSong._id;
+  }
+
+  if (!currentSong && currentId && Array.isArray(data.queue)) {
+    currentSong = data.queue.find((s) => s._id === currentId);
+  }
+
+  if (!currentId && !currentSong) {
+    currentSongId = null;
+    return null;
+  }
+
+  if (!currentSong) {
+    currentSongId = null;
+    return null;
+  }
+
+  const nextSongId = currentSong._id || currentId;
+  return { song: currentSong, id: nextSongId };
+}
+
+function openSongInPlayer(songEntry) {
+  if (!songEntry) return false;
+  const { song, id } = songEntry;
+  const url = `https://www.youtube.com/watch?v=${song.video_id}`;
+
+  if (playerTabId == null) {
+    currentSongId = id;
+    chrome.tabs.create({ url }, (tab) => {
+      playerTabId = tab.id;
+    });
+    return true;
+  }
+
+  if (id !== currentSongId) {
+    currentSongId = id;
+    chrome.tabs.update(playerTabId, { url }, () => {
+      if (chrome.runtime.lastError) {
+        chrome.tabs.remove(playerTabId, () => {
+          chrome.tabs.create({ url }, (tab) => {
+            playerTabId = tab.id;
+          });
+        });
+      }
+    });
+    return true;
+  }
+
+  // Already on the correct queue entry
+  return true;
+}
+
+async function applyQueueSnapshot(data) {
+  const songEntry = resolveCurrentSong(data);
+  if (!songEntry) {
+    return false;
+  }
+  return openSongInPlayer(songEntry);
+}
+
 async function ensurePlayback() {
   if (!ROOM_ID) return;
   try {
-    // Fetch current queue state without mutating it
     let res = await fetch(`${SERVER_URL}/api/rooms/${ROOM_ID}/queue`);
-    let data = await res.json();
-    let currentId = data.current_song_id;
-    let currentSong = data.current_song;
-    if (!currentId && currentSong) {
-      currentId = currentSong._id;
+    if (!res.ok) {
+      throw new Error(`Queue fetch failed: ${res.status}`);
     }
-    let queue = data.queue;
+    let data = await res.json();
+    const started = await applyQueueSnapshot(data);
+    if (started) return;
 
-    // If nothing is marked as current but the queue has songs, advance to next
-    if (!currentId && !currentSong && queue.length > 0) {
+    if (Array.isArray(data.queue) && data.queue.length > 0) {
       res = await fetch(`${SERVER_URL}/api/rooms/${ROOM_ID}/queue/next`, {
         method: "POST",
       });
+      if (!res.ok) {
+        throw new Error(`Queue advance failed: ${res.status}`);
+      }
       data = await res.json();
-      currentId = data.current_song_id;
-      currentSong = data.current_song;
-      queue = data.queue;
-      if (!currentId && currentSong) {
-        currentId = currentSong._id;
-      }
+      await applyQueueSnapshot(data);
     }
-
-    // No song to play, leave existing player tab until current video ends
-    if (!currentId && !currentSong) {
-      currentSongId = null;
-      return;
-    }
-
-    if (!currentSong && currentId) {
-      currentSong = queue.find((s) => s._id === currentId);
-    }
-
-    if (!currentSong) return;
-
-    const nextSongId = currentSong._id || currentId;
-    const url = `https://www.youtube.com/watch?v=${currentSong.video_id}`;
-
-    // Only create/update tab if the song entry is different
-    if (nextSongId !== currentSongId) {
-      currentSongId = nextSongId;
-      if (playerTabId == null) {
-        chrome.tabs.create({ url }, (tab) => {
-          playerTabId = tab.id;
-        });
-      } else {
-        chrome.tabs.update(playerTabId, { url }, () => {
-          if (chrome.runtime.lastError) {
-            chrome.tabs.remove(playerTabId, () => {
-              chrome.tabs.create({ url }, (tab) => {
-                playerTabId = tab.id;
-              });
-            });
-          }
-        });
-      }
-    }
-    // If same song entry, do nothing (prevents reload loop)
   } catch (e) {
     console.error("Failed to ensure playback", e);
   }
@@ -90,13 +115,18 @@ async function ensurePlayback() {
 async function advanceAndPlayNext() {
   if (!ROOM_ID) return;
   try {
-    await fetch(`${SERVER_URL}/api/rooms/${ROOM_ID}/queue/next`, {
+    const res = await fetch(`${SERVER_URL}/api/rooms/${ROOM_ID}/queue/next`, {
       method: "POST",
     });
+    if (!res.ok) {
+      throw new Error(`Advance failed: ${res.status}`);
+    }
+    const data = await res.json();
+    await applyQueueSnapshot(data);
   } catch (e) {
     console.error("Failed to advance queue", e);
+    ensurePlayback();
   }
-  ensurePlayback();
 }
 
 function init() {
@@ -113,6 +143,7 @@ chrome.runtime.onMessage.addListener((msg, sender) => {
       chrome.tabs.remove(sender.tab.id);
       if (sender.tab.id === playerTabId) {
         playerTabId = null;
+        currentSongId = null;
       }
     }
     advanceAndPlayNext();
