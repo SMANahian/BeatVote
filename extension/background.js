@@ -24,7 +24,9 @@ async function ensurePlayback() {
   if (!ROOM_ID) return;
   try {
     // Fetch current queue state without mutating it
-    let res = await fetch(`${SERVER_URL}/api/rooms/${ROOM_ID}/queue`);
+    let res = await fetch(`${SERVER_URL}/api/rooms/${ROOM_ID}/queue`, {
+      cache: "no-store",
+    });
     let data = await res.json();
     let currentId = data.current_song_id;
     let currentSong = data.current_song;
@@ -37,6 +39,7 @@ async function ensurePlayback() {
     if (!currentId && !currentSong && queue.length > 0) {
       res = await fetch(`${SERVER_URL}/api/rooms/${ROOM_ID}/queue/next`, {
         method: "POST",
+        cache: "no-store",
       });
       data = await res.json();
       currentId = data.current_song_id;
@@ -92,6 +95,7 @@ async function advanceAndPlayNext() {
   try {
     await fetch(`${SERVER_URL}/api/rooms/${ROOM_ID}/queue/next`, {
       method: "POST",
+      cache: "no-store",
     });
   } catch (e) {
     console.error("Failed to advance queue", e);

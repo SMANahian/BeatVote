@@ -54,7 +54,7 @@ function onYouTubeIframeAPIReady() {
 
 function onPlayerStateChange(event) {
   if (!useExtension && event.data === YT.PlayerState.ENDED) {
-    fetch(`/api/rooms/${window.roomId}/queue/next`, { method: 'POST' })
+    fetch(`/api/rooms/${window.roomId}/queue/next`, { method: 'POST', cache: 'no-store' })
       .then((r) => r.json())
       .then(renderQueue);
   }
@@ -62,7 +62,7 @@ function onPlayerStateChange(event) {
 
 function onPlayerError() {
   if (!useExtension) {
-    fetch(`/api/rooms/${window.roomId}/queue/next`, { method: 'POST' })
+    fetch(`/api/rooms/${window.roomId}/queue/next`, { method: 'POST', cache: 'no-store' })
       .then((r) => r.json())
       .then(renderQueue);
   }
@@ -79,12 +79,12 @@ function renderQueue(data) {
     const playBtn = document.createElement('button');
     playBtn.textContent = 'Play';
     playBtn.onclick = () => {
-      fetch(`/api/rooms/${window.roomId}/queue/${s._id}/play`, { method: 'POST' }).then(checkQueue);
+      fetch(`/api/rooms/${window.roomId}/queue/${s._id}/play`, { method: 'POST', cache: 'no-store' }).then(checkQueue);
     };
     const removeBtn = document.createElement('button');
     removeBtn.textContent = 'Remove';
     removeBtn.onclick = () => {
-      fetch(`/api/rooms/${window.roomId}/queue/${s._id}/remove`, { method: 'POST' }).then(checkQueue);
+      fetch(`/api/rooms/${window.roomId}/queue/${s._id}/remove`, { method: 'POST', cache: 'no-store' }).then(checkQueue);
     };
     li.appendChild(title);
     li.appendChild(playBtn);
@@ -124,7 +124,7 @@ function renderQueue(data) {
 
 async function checkQueue() {
   if (!window.roomId) return;
-  const res = await fetch(`/api/rooms/${window.roomId}/queue`);
+  const res = await fetch(`/api/rooms/${window.roomId}/queue`, { cache: 'no-store' });
   const data = await res.json();
   renderQueue(data);
   window.dispatchEvent(new Event('queue-updated'));
