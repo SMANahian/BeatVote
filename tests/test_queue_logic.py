@@ -112,9 +112,9 @@ def test_skips_played_song():
     assert room["current_song_id"] == s2["_id"]
 
 
-def test_next_song_skips_current_id_even_if_unplayed():
+def test_next_song_does_not_depend_on_previous_id():
     now = datetime.now(timezone.utc)
-    room = {"banned_video_ids": [], "deleted_video_ids": [], "current_song_id": None}
+    room = {"banned_video_ids": [], "deleted_video_ids": [], "current_song_id": "stale"}
     queue = []
     s1 = QueueService.add_song(room, queue, {"video_id": "a", "title": "A", "added_at": now})
     s2 = QueueService.add_song(
@@ -122,12 +122,9 @@ def test_next_song_skips_current_id_even_if_unplayed():
         queue,
         {"video_id": "b", "title": "B", "added_at": now + timedelta(seconds=1)},
     )
-    room["current_song_id"] = s1["_id"]
-    s1["played"] = False
-    s1["playing"] = False
     next_song = QueueService.get_next_song(room, queue)
-    assert next_song["_id"] == s2["_id"]
-    assert room["current_song_id"] == s2["_id"]
+    assert next_song["_id"] == s1["_id"]
+    assert room["current_song_id"] == s1["_id"]
 
 
 def test_queue_excludes_currently_playing():
