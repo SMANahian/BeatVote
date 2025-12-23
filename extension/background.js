@@ -1,39 +1,70 @@
-const SERVER_URL = "http://127.0.0.1:5000"; // Change if your server runs elsewhere
+let serverUrl = "http://127.0.0.1:5000";
+let roomId = null;
+let hostToken = null;
+let useExtension = true;
 
 let playerTabId = null;
-let ROOM_ID = null;
-let currentVideoId = null; // Track the currently playing video ID
+let currentVideoId = null;
 
-chrome.storage.local.get('roomId', (res) => {
-  ROOM_ID = res.roomId;
-  init();
-});
+function loadConfig() {
+  return new Promise((resolve) => {
+    chrome.storage.local.get(
+      ["serverUrl", "roomId", "hostToken", "useExtension"],
+      (res) => {
+      serverUrl = (res.serverUrl || serverUrl).replace(/\/+$/, "");
+      roomId = res.roomId || roomId;
+      hostToken = res.hostToken || hostToken;
+      useExtension = typeof res.useExtension === "boolean" ? res.useExtension : useExtension;
+      resolve();
+      }
+    );
+  });
+}
 
 function ensureHostTab() {
-  if (!ROOM_ID) return;
-  const hostPage = `${SERVER_URL}/${ROOM_ID}/host`;
-  chrome.tabs.query({ url: `${SERVER_URL}/*` }, (tabs) => {
-    const exists = tabs.some((t) => t.url === hostPage);
-    if (!exists) {
+  if (!roomId) return;
+  const hostPage = `${serverUrl}/${roomId}/host`;
+  chrome.tabs.query({}, (tabs) => {
+    const existing = tabs.find((t) => t.url === hostPage);
+    if (!existing) {
       chrome.tabs.create({ url: hostPage, pinned: true });
+      return;
+    }
+    if (!existing.pinned) {
+      chrome.tabs.update(existing.id, { pinned: true });
     }
   });
 }
 
+async function apiFetch(path, init) {
+  const headers = new Headers((init && init.headers) || {});
+  if (hostToken) {
+    headers.set("X-BeatVote-Host-Token", hostToken);
+  }
+  return fetch(`${serverUrl}${path}`, { ...(init || {}), headers });
+}
+
 async function ensurePlayback() {
-  if (!ROOM_ID) return;
+  if (!roomId) return;
+  if (!useExtension) {
+    if (playerTabId != null) {
+      chrome.tabs.remove(playerTabId);
+      playerTabId = null;
+      currentVideoId = null;
+    }
+    return;
+  }
   try {
     // Fetch current queue state without mutating it
-    let res = await fetch(`${SERVER_URL}/api/rooms/${ROOM_ID}/queue`);
+    let res = await apiFetch(`/api/rooms/${roomId}/queue`);
     let data = await res.json();
     let currentId = data.current_song_id;
     let queue = data.queue;
 
     // If nothing is marked as current but the queue has songs, advance to next
     if (!currentId && queue.length > 0) {
-      res = await fetch(`${SERVER_URL}/api/rooms/${ROOM_ID}/queue/next`, {
-        method: "POST",
-      });
+      if (!hostToken) return;
+      res = await apiFetch(`/api/rooms/${roomId}/queue/next`, { method: "POST" });
       data = await res.json();
       currentId = data.current_song_id;
       queue = data.queue;
@@ -75,24 +106,32 @@ async function ensurePlayback() {
 }
 
 async function advanceAndPlayNext() {
-  if (!ROOM_ID) return;
+  if (!roomId || !hostToken) return;
   try {
-    await fetch(`${SERVER_URL}/api/rooms/${ROOM_ID}/queue/next`, {
-      method: "POST",
-    });
+    await apiFetch(`/api/rooms/${roomId}/queue/next`, { method: "POST" });
   } catch (e) {
     console.error("Failed to advance queue", e);
   }
   ensurePlayback();
 }
 
-function init() {
+async function init() {
+  await loadConfig();
+  if (!roomId) return;
   ensureHostTab();
   ensurePlayback();
+
+  chrome.alarms.create("beatvote-tick", { periodInMinutes: 0.1 });
 }
 
 chrome.runtime.onInstalled.addListener(init);
 chrome.runtime.onStartup.addListener(init);
+
+chrome.alarms.onAlarm.addListener((alarm) => {
+  if (alarm.name !== "beatvote-tick") return;
+  ensureHostTab();
+  ensurePlayback();
+});
 
 chrome.runtime.onMessage.addListener((msg, sender) => {
   if (msg.type === "video-ended") {
@@ -103,13 +142,13 @@ chrome.runtime.onMessage.addListener((msg, sender) => {
       }
     }
     advanceAndPlayNext();
-  } else if (msg.type === "use-extension" || msg.type === "queue-updated") {
+  } else if (msg.type === "queue-updated") {
     ensurePlayback();
-  } else if (msg.type === "room-updated") {
-    chrome.storage.local.get('roomId', (res) => {
-      ROOM_ID = res.roomId;
-      init();
-    });
+  } else if (msg.type === "config-updated") {
+    init();
+  } else if (msg.type === "host-state") {
+    useExtension = msg.useExtension !== false;
+    ensurePlayback();
   }
 });
 

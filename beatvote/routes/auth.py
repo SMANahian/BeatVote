@@ -1,6 +1,16 @@
-from flask import Blueprint, render_template, request, redirect, url_for, flash, make_response
-from flask_login import login_user, logout_user, login_required
 import uuid
+
+from flask import (
+    Blueprint,
+    flash,
+    make_response,
+    redirect,
+    render_template,
+    request,
+    url_for,
+)
+from flask_login import login_required, login_user, logout_user
+
 from ..services import auth_service
 
 auth_bp = Blueprint("auth", __name__, url_prefix="/auth")
@@ -14,7 +24,7 @@ def login():
         user = auth_service.authenticate(email, password)
         if user:
             login_user(user)
-            return redirect(url_for("rooms.create"))
+            return redirect(url_for("rooms.spa_host"))
         flash("Invalid credentials", "error")
     return render_template("auth_login.html")
 
@@ -27,7 +37,7 @@ def signup():
         password = request.form.get("password", "")
         user = auth_service.register(email, username, password)
         login_user(user)
-        return redirect(url_for("rooms.create"))
+        return redirect(url_for("rooms.spa_host"))
     return render_template("auth_signup.html")
 
 

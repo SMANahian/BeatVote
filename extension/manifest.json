@@ -4,9 +4,13 @@
   "version": "1.0",
   "description": "Keeps the BeatVote host tab open and plays songs in a separate YouTube tab.",
 
-  "permissions": ["tabs", "storage"],
+  "permissions": ["tabs", "storage", "alarms"],
 
-  "host_permissions": ["http://127.0.0.1:5000/*", "https://www.youtube.com/*"],
+  "host_permissions": [
+    "http://127.0.0.1/*",
+    "http://localhost/*",
+    "https://www.youtube.com/*"
+  ],
   "background": {
     "service_worker": "background.js"
   },
@@ -17,7 +21,7 @@
       "run_at": "document_idle"
     },
     {
-      "matches": ["http://127.0.0.1:5000/*/host"],
+      "matches": ["http://127.0.0.1/*/host", "http://localhost/*/host"],
       "js": ["host.js"],
       "run_at": "document_idle"
     }

@@ -1,19 +1,44 @@
-// Listen for song end event instead of queue update
-window.addEventListener('song-ended', () => {
-  chrome.runtime.sendMessage({ type: 'queue-updated' });
-});
-
-function attach() {
-  const btn = document.getElementById('use-extension');
-  if (!btn) {
-    setTimeout(attach, 1000);
+function syncConfigFromHostPage(notifyType = "config-updated") {
+  const el = document.getElementById("beatvote-extension-config");
+  if (!el) {
+    setTimeout(syncConfigFromHostPage, 800);
     return;
   }
-  btn.addEventListener('click', () => {
-    chrome.runtime.sendMessage({ type: 'use-extension' });
+  const roomId = el.dataset.roomId;
+  const hostToken = el.dataset.hostToken;
+  const serverUrl = el.dataset.serverUrl || window.location.origin;
+  const useExtension = el.dataset.useExtension !== "false";
+  if (!roomId || !hostToken) return;
+
+  chrome.storage.local.set(
+    {
+      roomId,
+      hostToken,
+      serverUrl: serverUrl.replace(/\/+$/, ""),
+      useExtension,
+    },
+    () => {
+      chrome.runtime.sendMessage({ type: notifyType, useExtension });
+    }
+  );
+}
+
+window.addEventListener("queue-updated", () => {
+  chrome.runtime.sendMessage({ type: "queue-updated" });
+});
+
+function attachButton() {
+  const btn = document.getElementById("use-extension");
+  if (!btn) {
+    setTimeout(attachButton, 1000);
+    return;
+  }
+  btn.addEventListener("click", () => {
+    setTimeout(() => {
+      syncConfigFromHostPage("host-state");
+    }, 50);
   });
 }
-attach();
 
-// TODO: Make sure to dispatch a 'song-ended' event when the song actually finishes playing.
-// If your player does not dispatch this event, you need to add it where the song ends.
+syncConfigFromHostPage("config-updated");
+attachButton();

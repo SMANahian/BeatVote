@@ -1,20 +1,23 @@
 # BeatVote
 
-BeatVote is a Flask + MongoDB web application for running collaborative karaoke or party music rooms. Users can search YouTube, add songs to a shared queue and vote.
+BeatVote is a Flask + MongoDB + React application for running collaborative karaoke / party music rooms. Guests can join with a code, suggest songs from YouTube, and vote the next track to the top.
 
 ## Features
 
 - Email/password authentication with Flask-Login
 - Guest access via cookies
-- Queue updates via simple HTTP polling
+- Room roles (host / suggestor / listener)
+- Queue updates via simple HTTP polling (prototype)
 - YouTube Data API search proxy
 - MongoDB for persistence
+- Optional Chrome/Brave extension player (auto-advance in a dedicated YouTube tab)
 
 ## Setup
 
 ### 1. Prerequisites
 
-- Python 3.10+ and `pip`
+- Python 3.10+
+- Node.js 18+ (for the React frontend build)
 - [Docker](https://docs.docker.com/get-docker/) (optional, for running MongoDB)
 - A Google Cloud project with access to the YouTube Data API v3
 
@@ -23,9 +26,15 @@ BeatVote is a Flask + MongoDB web application for running collaborative karaoke 
 Create a virtual environment and install the required Python packages:
 
 ```bash
-python3 -m venv venv
-source venv/bin/activate
-pip install -r requirements.txt
+python -m venv .venv
+.venv/bin/pip install -r requirements.txt
+```
+
+Install frontend deps (pnpm recommended, but npm works too):
+
+```bash
+cd frontend
+pnpm install
 ```
 
 ### 3. Configure environment variables
@@ -90,16 +99,36 @@ default. You can change this by setting `MONGO_URI` in `.env` (or
 If you prefer to run the entire stack in Docker, you can run:
 
 ```bash
-docker-compose up
+docker-compose up --build
 ```
 
-### 5. Launch the development server
+### 5. Build + run
+
+#### Option A (simplest): build the React UI once, serve from Flask
+
+```bash
+cd frontend
+pnpm build
+cd ..
+make dev
+```
+
+Open `http://127.0.0.1:5000`.
+
+#### Option B: run Vite dev server (proxying `/api` to Flask)
 
 ```bash
 make dev
 ```
 
-The app will be available at [http://127.0.0.1:5000](http://127.0.0.1:5000).
+In another terminal:
+
+```bash
+cd frontend
+pnpm dev
+```
+
+Open `http://127.0.0.1:5173` (recommended over `localhost` so cookies work).
 
 ## Testing
 
@@ -123,7 +152,7 @@ The `docker-compose.yml` file defines services for the Flask app and MongoDB. Th
 
 ## Browser Extension
 
-A simple Brave/Chrome extension is provided in the `extension` directory. It keeps the host room page pinned and plays queued songs in a dedicated YouTube tab. The extension player is enabled by default on the host page, but you can switch to the embedded player by clicking **Use Web Player**.
+A Chrome/Brave extension is provided in the `extension` directory. It keeps the host room page pinned and plays queued songs in a dedicated YouTube tab, auto-advancing the queue via a host token.
 
 ### Installation
 
@@ -131,8 +160,8 @@ A simple Brave/Chrome extension is provided in the `extension` directory. It kee
 2. In Brave, open `brave://extensions`.
 3. Enable **Developer mode**.
 4. Click **Load unpacked** and select the `extension` folder.
-5. Click the extension icon and enter your room ID.
-6. The host page will open in a pinned tab and songs from the queue will play in a separate tab. To use the embedded player instead, click **Use Web Player** on the host page.
+5. Open `http://127.0.0.1:5000/host`, create a room, then open the room’s host view.
+6. The host view exposes a Host Token. The extension will auto-sync config from the host tab, or you can paste Server URL + Room ID + Host Token in the extension popup.
 
 ## Notes
 

@@ -201,6 +201,12 @@ cython_debug/
 .cursorignore
 .cursorindexingignore
 
+# Node / Frontend
+node_modules/
+frontend/node_modules/
+frontend/dist/
+beatvote/static/app/
+
 # Marimo
 marimo/_static/
 marimo/_lsp/
