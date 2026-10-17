@@ -1,5 +1,7 @@
 # BeatVote
 
+Built at HackMIT 2025 by a team of four.
+
 BeatVote is a Flask + MongoDB web application for running collaborative karaoke or party music rooms. Users can search YouTube, add songs to a shared queue and vote.
 
 ## Features
